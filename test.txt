@@ -11,11 +11,3 @@ user
     book machine
     view response
     
-connection of database
-username:Rent-a-cultivator
-password:rent
-link:mongodb+srv://Rent-a-cultivator:<db_password>@cluster0.8rnjwii.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
-
-
-replace the username and password to:
-mongodb+srv://Rent-a-cultivator:rent@cluster0.8rnjwii.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
