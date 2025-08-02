@@ -40,6 +40,7 @@ const Index = () => {
             <HeroSection onGetStarted={handleGetStarted} />
             <EquipmentShowcase onBookEquipment={(equipment) => {
               console.log('Booking equipment:', equipment);
+              // Show auth modal when user tries to book without being logged in
               setIsAuthModalOpen(true);
             }} />
             <ImageGallery />

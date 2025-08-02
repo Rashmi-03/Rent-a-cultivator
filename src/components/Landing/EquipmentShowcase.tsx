@@ -44,8 +44,8 @@ const equipmentData: Equipment[] = [
     name: 'John Deere 6120M Tractor',
     category: 'Tractor',
     image: tractorStock,
-    hourlyRate: 3750,
-    dailyRate: 25000,
+    hourlyRate: 800,
+    dailyRate: 6000,
     available: true,
     rating: 4.8,
     location: 'Downtown Farm Equipment',
@@ -57,8 +57,8 @@ const equipmentData: Equipment[] = [
     name: 'Case IH Axial-Flow 250 Harvester',
     category: 'Harvester',
     image: harvesterStock,
-    hourlyRate: 7000,
-    dailyRate: 55000,
+    hourlyRate: 1200,
+    dailyRate: 9000,
     available: true,
     rating: 4.6,
     location: 'North Valley Equipment',
@@ -70,8 +70,8 @@ const equipmentData: Equipment[] = [
     name: 'Harvestmaster H12 4WD',
     category: 'Harvester',
     image: harvestmasterH12,
-    hourlyRate: 6000,
-    dailyRate: 48000,
+    hourlyRate: 1000,
+    dailyRate: 7500,
     available: true,
     rating: 4.7,
     location: 'Central Farm Services',
@@ -83,8 +83,8 @@ const equipmentData: Equipment[] = [
     name: 'Standard Tractor-Mounted Combine',
     category: 'Harvester',
     image: standardTractorHarvester,
-    hourlyRate: 5200,
-    dailyRate: 40000,
+    hourlyRate: 900,
+    dailyRate: 7000,
     available: false,
     rating: 4.5,
     location: 'South Field Equipment',
@@ -96,8 +96,8 @@ const equipmentData: Equipment[] = [
     name: 'Front-End Loader',
     category: 'Loader',
     image: loadersDesktop,
-    hourlyRate: 2800,
-    dailyRate: 22000,
+    hourlyRate: 600,
+    dailyRate: 4500,
     available: true,
     rating: 4.4,
     location: 'West Construction Equipment',
@@ -109,8 +109,8 @@ const equipmentData: Equipment[] = [
     name: 'Mahindra Round Baler',
     category: 'Baler',
     image: mahindraRoundBaler,
-    hourlyRate: 3200,
-    dailyRate: 25000,
+    hourlyRate: 700,
+    dailyRate: 5500,
     available: true,
     rating: 4.3,
     location: 'East Farm Machinery',
@@ -122,8 +122,8 @@ const equipmentData: Equipment[] = [
     name: 'Mahindra Straw Baler',
     category: 'Baler',
     image: mahindraStrawBaler,
-    hourlyRate: 3000,
-    dailyRate: 24000,
+    hourlyRate: 650,
+    dailyRate: 5000,
     available: true,
     rating: 4.2,
     location: 'Central Farm Services',
@@ -135,8 +135,8 @@ const equipmentData: Equipment[] = [
     name: 'Premium Tractor Unit',
     category: 'Tractor',
     image: productJpeg,
-    hourlyRate: 4000,
-    dailyRate: 32000,
+    hourlyRate: 900,
+    dailyRate: 7000,
     available: false,
     rating: 4.9,
     location: 'Premium Equipment Co.',
@@ -148,8 +148,8 @@ const equipmentData: Equipment[] = [
     name: 'Mahindra Straw Reaper',
     category: 'Reaper',
     image: mahindraStrawReaper,
-    hourlyRate: 2400,
-    dailyRate: 18000,
+    hourlyRate: 500,
+    dailyRate: 4000,
     available: true,
     rating: 4.1,
     location: 'South Field Equipment',
@@ -161,8 +161,8 @@ const equipmentData: Equipment[] = [
     name: 'Mahindra Basket Thresher P-990',
     category: 'Thresher',
     image: mahindraBasketThresher,
-    hourlyRate: 2000,
-    dailyRate: 15000,
+    hourlyRate: 400,
+    dailyRate: 3000,
     available: true,
     rating: 4.0,
     location: 'North Valley Equipment',
@@ -174,8 +174,8 @@ const equipmentData: Equipment[] = [
     name: 'Mahindra Paddy Multi-Thresher P-80',
     category: 'Thresher',
     image: mahindraPaddyThresher,
-    hourlyRate: 2200,
-    dailyRate: 17000,
+    hourlyRate: 450,
+    dailyRate: 3500,
     available: true,
     rating: 4.2,
     location: 'Central Farm Services',
@@ -187,8 +187,8 @@ const equipmentData: Equipment[] = [
     name: 'Premium Farm Tractor',
     category: 'Tractor',
     image: istockTractor,
-    hourlyRate: 4400,
-    dailyRate: 35000,
+    hourlyRate: 1000,
+    dailyRate: 8000,
     available: true,
     rating: 4.7,
     location: 'Premium Equipment Co.',
@@ -200,8 +200,8 @@ const equipmentData: Equipment[] = [
     name: 'Mild Steel Plough Cultivator',
     category: 'Cultivator',
     image: mildSteelPlough,
-    hourlyRate: 1600,
-    dailyRate: 12000,
+    hourlyRate: 300,
+    dailyRate: 2500,
     available: true,
     rating: 4.3,
     location: 'East Farm Machinery',
@@ -213,8 +213,8 @@ const equipmentData: Equipment[] = [
     name: 'Rigid Type Cultivator',
     category: 'Cultivator',
     image: rigidCultivator,
-    hourlyRate: 1800,
-    dailyRate: 14000,
+    hourlyRate: 350,
+    dailyRate: 2800,
     available: true,
     rating: 4.4,
     location: 'West Construction Equipment',
@@ -226,8 +226,8 @@ const equipmentData: Equipment[] = [
     name: 'Disc Harrow Cultivator',
     category: 'Cultivator',
     image: discHarrow,
-    hourlyRate: 2000,
-    dailyRate: 15000,
+    hourlyRate: 400,
+    dailyRate: 3200,
     available: false,
     rating: 4.1,
     location: 'South Field Equipment',
@@ -239,8 +239,8 @@ const equipmentData: Equipment[] = [
     name: 'AG400 Paddy Thresher',
     category: 'Thresher',
     image: ag400PaddyThresher,
-    hourlyRate: 2100,
-    dailyRate: 16000,
+    hourlyRate: 420,
+    dailyRate: 3300,
     available: true,
     rating: 4.2,
     location: 'Central Farm Services',
@@ -252,8 +252,8 @@ const equipmentData: Equipment[] = [
     name: 'Tractor Rotavator 18 HP',
     category: 'Rotavator',
     image: tractorRotavator,
-    hourlyRate: 2400,
-    dailyRate: 18000,
+    hourlyRate: 500,
+    dailyRate: 4000,
     available: true,
     rating: 4.5,
     location: 'North Valley Equipment',
@@ -265,8 +265,8 @@ const equipmentData: Equipment[] = [
     name: 'Additional Agricultural Equipment',
     category: 'Specialty',
     image: additionalImage,
-    hourlyRate: 2800,
-    dailyRate: 22000,
+    hourlyRate: 600,
+    dailyRate: 4800,
     available: true,
     rating: 4.3,
     location: 'Central Farm Services',
@@ -275,12 +275,60 @@ const equipmentData: Equipment[] = [
   }
 ];
 
+import { useState } from "react";
+import { BookingModal } from "@/components/Booking/BookingModal";
+import { useBookings } from "@/hooks/useBookings";
+import { useToast } from "@/hooks/use-toast";
+
 interface EquipmentShowcaseProps {
   onBookEquipment?: (equipment: Equipment) => void;
 }
 
 export const EquipmentShowcase = ({ onBookEquipment }: EquipmentShowcaseProps) => {
+  const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null);
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const { addBooking } = useBookings();
+  const { toast } = useToast();
   const categories = [...new Set(equipmentData.map(item => item.category))];
+
+  const handleBookEquipment = (equipment: Equipment) => {
+    setSelectedEquipment(equipment);
+    setIsBookingModalOpen(true);
+  };
+
+  const handleConfirmBooking = (bookingData: any) => {
+    try {
+      const newBooking = addBooking({
+        equipmentId: bookingData.equipmentId,
+        equipmentName: bookingData.equipmentName,
+        startDate: bookingData.startDate,
+        endDate: bookingData.endDate,
+        duration: bookingData.duration,
+        durationType: bookingData.durationType || 'hours',
+        distance: bookingData.distance,
+        basePrice: bookingData.basePrice,
+        distancePrice: bookingData.distancePrice,
+        totalPrice: bookingData.totalPrice,
+        deliveryAddress: bookingData.deliveryAddress,
+        contactNumber: bookingData.contactNumber,
+        specialRequirements: bookingData.specialRequirements
+      });
+
+      toast({
+        title: "Booking Confirmed!",
+        description: `Your booking for ${bookingData.equipmentName} has been successfully created. Booking ID: ${newBooking.id}`,
+      });
+
+      // Call the original onBookEquipment callback if provided
+      onBookEquipment?.(selectedEquipment!);
+    } catch (error) {
+      toast({
+        title: "Booking Failed",
+        description: "There was an error creating your booking. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
   
   return (
     <section className="py-16 bg-gradient-to-b from-background to-muted/20">
@@ -373,7 +421,7 @@ export const EquipmentShowcase = ({ onBookEquipment }: EquipmentShowcaseProps) =
                     variant="primary" 
                     className="flex-1"
                     disabled={!equipment.available}
-                    onClick={() => onBookEquipment?.(equipment)}
+                    onClick={() => handleBookEquipment(equipment)}
                   >
                     {equipment.available ? 'Book Now' : 'Currently Rented'}
                   </Button>
@@ -399,6 +447,17 @@ export const EquipmentShowcase = ({ onBookEquipment }: EquipmentShowcaseProps) =
           </div>
         </div>
       </div>
+
+      {/* Booking Modal */}
+      <BookingModal
+        equipment={selectedEquipment}
+        isOpen={isBookingModalOpen}
+        onClose={() => {
+          setIsBookingModalOpen(false);
+          setSelectedEquipment(null);
+        }}
+        onConfirm={handleConfirmBooking}
+      />
     </section>
   );
 }; 

@@ -1,7 +1,10 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, MapPin, Star, Tractor, Wrench, Users } from "lucide-react";
+import { Calendar, Clock, MapPin, Star, Tractor, Wrench, Users, Truck } from "lucide-react";
+import { useBookings } from "@/hooks/useBookings";
+import { format } from "date-fns";
+import { BookingSummary } from "./BookingSummary";
 
 // Import all machinery images
 import tractorStock from "@/assets/tractor-stock.jpg";
@@ -49,7 +52,7 @@ const machines: Machine[] = [
     name: 'John Deere 6120M',
     category: 'Tractor',
     image: tractorStock,
-    hourlyRate: 3750,
+    hourlyRate: 800,
     available: true,
     rating: 4.8,
     location: 'Downtown Farm Equipment'
@@ -59,7 +62,7 @@ const machines: Machine[] = [
     name: 'Case IH Axial-Flow 250',
     category: 'Harvester',
     image: harvesterStock,
-    hourlyRate: 7000,
+    hourlyRate: 1200,
     available: true,
     rating: 4.6,
     location: 'North Valley Equipment'
@@ -69,7 +72,7 @@ const machines: Machine[] = [
     name: 'Harvestmaster H12 4WD',
     category: 'Harvester',
     image: harvestmasterH12,
-    hourlyRate: 6000,
+    hourlyRate: 1000,
     available: true,
     rating: 4.7,
     location: 'Central Farm Services'
@@ -79,7 +82,7 @@ const machines: Machine[] = [
     name: 'Standard Tractor-Mounted Combine',
     category: 'Harvester',
     image: standardTractorHarvester,
-    hourlyRate: 5200,
+    hourlyRate: 900,
     available: false,
     rating: 4.5,
     location: 'South Field Equipment'
@@ -89,7 +92,7 @@ const machines: Machine[] = [
     name: 'Front-End Loader',
     category: 'Loader',
     image: loadersDesktop,
-    hourlyRate: 2800,
+    hourlyRate: 600,
     available: true,
     rating: 4.4,
     location: 'West Construction Equipment'
@@ -99,7 +102,7 @@ const machines: Machine[] = [
     name: 'Mahindra Round Baler',
     category: 'Baler',
     image: mahindraRoundBaler,
-    hourlyRate: 3200,
+    hourlyRate: 700,
     available: true,
     rating: 4.3,
     location: 'East Farm Machinery'
@@ -109,7 +112,7 @@ const machines: Machine[] = [
     name: 'Mahindra Straw Baler',
     category: 'Baler',
     image: mahindraStrawBaler,
-    hourlyRate: 3000,
+    hourlyRate: 650,
     available: true,
     rating: 4.2,
     location: 'Central Farm Services'
@@ -119,7 +122,7 @@ const machines: Machine[] = [
     name: 'Premium Tractor Unit',
     category: 'Tractor',
     image: productJpeg,
-    hourlyRate: 4000,
+    hourlyRate: 900,
     available: false,
     rating: 4.9,
     location: 'Premium Equipment Co.'
@@ -129,7 +132,7 @@ const machines: Machine[] = [
     name: 'Mahindra Straw Reaper',
     category: 'Reaper',
     image: mahindraStrawReaper,
-    hourlyRate: 2400,
+    hourlyRate: 500,
     available: true,
     rating: 4.1,
     location: 'South Field Equipment'
@@ -139,7 +142,7 @@ const machines: Machine[] = [
     name: 'Mahindra Basket Thresher P-990',
     category: 'Thresher',
     image: mahindraBasketThresher,
-    hourlyRate: 2000,
+    hourlyRate: 400,
     available: true,
     rating: 4.0,
     location: 'North Valley Equipment'
@@ -149,7 +152,7 @@ const machines: Machine[] = [
     name: 'Mahindra Paddy Multi-Thresher P-80',
     category: 'Thresher',
     image: mahindraPaddyThresher,
-    hourlyRate: 2200,
+    hourlyRate: 450,
     available: true,
     rating: 4.2,
     location: 'Central Farm Services'
@@ -159,7 +162,7 @@ const machines: Machine[] = [
     name: 'Premium Farm Tractor',
     category: 'Tractor',
     image: istockTractor,
-    hourlyRate: 4400,
+    hourlyRate: 1000,
     available: true,
     rating: 4.7,
     location: 'Premium Equipment Co.'
@@ -169,7 +172,7 @@ const machines: Machine[] = [
     name: 'Mild Steel Plough Cultivator',
     category: 'Cultivator',
     image: mildSteelPlough,
-    hourlyRate: 1600,
+    hourlyRate: 300,
     available: true,
     rating: 4.3,
     location: 'East Farm Machinery'
@@ -179,7 +182,7 @@ const machines: Machine[] = [
     name: 'Rigid Type Cultivator',
     category: 'Cultivator',
     image: rigidCultivator,
-    hourlyRate: 1800,
+    hourlyRate: 350,
     available: true,
     rating: 4.4,
     location: 'West Construction Equipment'
@@ -189,7 +192,7 @@ const machines: Machine[] = [
     name: 'Disc Harrow Cultivator',
     category: 'Cultivator',
     image: discHarrow,
-    hourlyRate: 2000,
+    hourlyRate: 400,
     available: false,
     rating: 4.1,
     location: 'South Field Equipment'
@@ -199,7 +202,7 @@ const machines: Machine[] = [
     name: 'AG400 Paddy Thresher',
     category: 'Thresher',
     image: ag400PaddyThresher,
-    hourlyRate: 2100,
+    hourlyRate: 420,
     available: true,
     rating: 4.2,
     location: 'Central Farm Services'
@@ -209,7 +212,7 @@ const machines: Machine[] = [
     name: 'Tractor Rotavator 18 HP',
     category: 'Rotavator',
     image: tractorRotavator,
-    hourlyRate: 2400,
+    hourlyRate: 500,
     available: true,
     rating: 4.5,
     location: 'North Valley Equipment'
@@ -219,7 +222,7 @@ const machines: Machine[] = [
     name: 'Additional Agricultural Equipment',
     category: 'Specialty',
     image: additionalImage,
-    hourlyRate: 2800,
+    hourlyRate: 600,
     available: true,
     rating: 4.3,
     location: 'Central Farm Services'
@@ -246,11 +249,24 @@ const recentBookings: Booking[] = [
 ];
 
 export const UserDashboard = () => {
+  const { 
+    bookings, 
+    getActiveBookings, 
+    getTotalSpent, 
+    getUpcomingBookings,
+    cancelBooking,
+    completeBooking 
+  } = useBookings();
+
+  const activeBookings = getActiveBookings();
+  const totalSpent = getTotalSpent();
+  const upcomingBookings = getUpcomingBookings();
+
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
       {/* Welcome Section */}
       <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold text-foreground">Welcome to AgriFleet</h1>
+        <h1 className="text-3xl font-bold text-foreground">Welcome to Rent a Cultivator</h1>
         <p className="text-muted-foreground">Rent quality agricultural equipment for your farming needs</p>
       </div>
 
@@ -273,19 +289,19 @@ export const UserDashboard = () => {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-agriculture-gold">3</div>
+            <div className="text-2xl font-bold text-agriculture-gold">{activeBookings.length}</div>
             <p className="text-xs text-muted-foreground">Active rentals</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Saved</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Spent</CardTitle>
             <Star className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">₹1,95,000</div>
-            <p className="text-xs text-muted-foreground">vs buying equipment</p>
+            <div className="text-2xl font-bold text-primary">₹{totalSpent.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">on equipment rentals</p>
           </CardContent>
         </Card>
       </div>
@@ -345,35 +361,90 @@ export const UserDashboard = () => {
       <section>
         <h2 className="text-2xl font-semibold mb-6">Your Recent Bookings</h2>
         <div className="space-y-4">
-          {recentBookings.map((booking) => (
-            <Card key={booking.id}>
-              <CardContent className="flex items-center justify-between p-6">
-                <div className="flex items-center space-x-4">
-                  <div>
-                    <h3 className="font-semibold">{booking.machineName}</h3>
-                    <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                      <span>{booking.date}</span>
-                      <span>•</span>
-                      <span>{booking.duration}</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-4">
-                  <Badge 
-                    variant={booking.status === 'completed' ? 'secondary' : 
-                            booking.status === 'confirmed' ? 'default' : 'outline'}
-                  >
-                    {booking.status}
-                  </Badge>
-                  <div className="text-right">
-                    <div className="font-semibold">₹{booking.cost}</div>
-                  </div>
+          {bookings.length === 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <div className="text-muted-foreground">
+                  <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <h3 className="text-lg font-semibold mb-2">No Bookings Yet</h3>
+                  <p>Start by booking some equipment from our catalog.</p>
                 </div>
               </CardContent>
             </Card>
-          ))}
+          ) : (
+            bookings.slice(0, 5).map((booking) => (
+              <Card key={booking.id}>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="font-semibold text-lg">{booking.equipmentName}</h3>
+                      <div className="flex items-center space-x-4 text-sm text-muted-foreground mt-1">
+                        <span>{format(booking.startDate, 'MMM dd, yyyy')}</span>
+                        <span>•</span>
+                        <span>{booking.duration} {booking.durationType}</span>
+                        <span>•</span>
+                        <div className="flex items-center space-x-1">
+                          <Truck className="h-3 w-3" />
+                          <span>{booking.distance} km</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-bold text-lg">₹{booking.totalPrice.toLocaleString()}</div>
+                      <div className="text-sm text-muted-foreground">
+                        Base: ₹{booking.basePrice.toLocaleString()} + Delivery: ₹{booking.distancePrice.toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Badge 
+                        variant={
+                          booking.status === 'completed' ? 'secondary' : 
+                          booking.status === 'confirmed' ? 'default' : 
+                          booking.status === 'cancelled' ? 'destructive' : 'outline'
+                        }
+                      >
+                        {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                      </Badge>
+                      <span className="text-sm text-muted-foreground">
+                        {format(booking.createdAt, 'MMM dd, yyyy')}
+                      </span>
+                    </div>
+                    
+                    <div className="flex space-x-2">
+                      {booking.status === 'pending' && (
+                        <>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => cancelBooking(booking.id)}
+                          >
+                            Cancel
+                          </Button>
+                        </>
+                      )}
+                      {booking.status === 'confirmed' && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => completeBooking(booking.id)}
+                        >
+                          Mark Complete
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
         </div>
       </section>
+
+      {/* Booking Summary */}
+      <BookingSummary />
     </div>
   );
 };

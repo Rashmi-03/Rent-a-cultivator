@@ -29,7 +29,7 @@ export const HeroSection = ({ onGetStarted }: HeroSectionProps) => {
           <div className="flex items-center justify-center space-x-2 mb-6">
             <Tractor className="h-12 w-12 text-agriculture-gold" />
             <h1 className="text-5xl md:text-7xl font-bold">
-              Agri<span className="text-agriculture-gold">Fleet</span>
+              Rent a <span className="text-agriculture-gold">Cultivator</span>
             </h1>
           </div>
           

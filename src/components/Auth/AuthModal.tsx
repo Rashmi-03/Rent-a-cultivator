@@ -50,7 +50,7 @@ export const AuthModal = ({ isOpen, onClose, onAuth }: AuthModalProps) => {
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="text-center">
-            Welcome to AgriFleet
+            Welcome to Rent a Cultivator
           </DialogTitle>
         </DialogHeader>
 

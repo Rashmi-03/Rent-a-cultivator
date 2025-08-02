@@ -1,4 +1,4 @@
-# Welcome to Rent a cultivetro
+# Welcome to Rent a Cultivator
 
 ## Project info
 
