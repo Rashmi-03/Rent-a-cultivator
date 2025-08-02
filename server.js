@@ -10,7 +10,7 @@ app.use(express.json());
 const PORT = 5000;
 
 // Direct MongoDB connection link (hardcoded here)
-const mongoURI = "mongodb+srv://<username>:<password>@<cluster-url>/<dbname>?retryWrites=true&w=majority";
+const mongoURI = "mongodb+srv://Rashmi04:<1234567890>@cluster0.z8wkr5v.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
 // Replace with your actual MongoDB connection string
 mongoose
