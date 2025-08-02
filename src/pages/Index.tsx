@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Header } from "@/components/Layout/Header";
 import { AuthModal } from "@/components/Auth/AuthModal";
 import { HeroSection } from "@/components/Landing/HeroSection";
+import { EquipmentShowcase } from "@/components/Landing/EquipmentShowcase";
+import { ImageGallery } from "@/components/Landing/ImageGallery";
 import { UserDashboard } from "@/components/Dashboard/UserDashboard";
 import { AdminDashboard } from "@/components/Dashboard/AdminDashboard";
 
@@ -34,7 +36,14 @@ const Index = () => {
       
       <main>
         {!currentUser && (
-          <HeroSection onGetStarted={handleGetStarted} />
+          <>
+            <HeroSection onGetStarted={handleGetStarted} />
+            <EquipmentShowcase onBookEquipment={(equipment) => {
+              console.log('Booking equipment:', equipment);
+              setIsAuthModalOpen(true);
+            }} />
+            <ImageGallery />
+          </>
         )}
         
         {currentUser === 'user' && <UserDashboard />}
