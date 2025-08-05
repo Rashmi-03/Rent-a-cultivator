@@ -1,0 +1,13 @@
+Admin
+    login
+    add machine category
+    update machine stick
+    view register customer
+
+user
+    login
+    register
+    machine details
+    book machine
+    view response
+    
