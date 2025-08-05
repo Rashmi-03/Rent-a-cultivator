@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const Machine = require('../models/Machine');
-const Booking = require('../models/Booking');
+// ...existing code...
+const Machine = require('./models/Machine');
+// ...existing code...
+const Booking = require('../Backend/models/Booking');
 const Feedback = require('../models/Feedback');
 
 // Add machine
