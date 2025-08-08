@@ -2,24 +2,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { 
-  Users, 
-  Calendar, 
-  TrendingUp, 
-  Plus,
-  Settings,
-  MessageSquare,
-  Star
-} from "lucide-react";
-
-interface DashboardStats {
-  totalMachines: number;
-  availableMachines: number;
-  totalCustomers: number;
-  activeBookings: number;
-  monthlyRevenue: number;
-  customerSatisfaction: number;
-}
+import { Users, Calendar, TrendingUp, Plus, Settings, MessageSquare, Star } from "lucide-react";
+import { useState } from "react";
+import { AddMachineModal } from "./AddMachineModal";
+import { SettingsModal } from "./SettingsModal";
+import { UpdateStockModal } from "./UpdateStockModal";
+import { CategoriesModal } from "./CategoriesModal";
+import { FeedbackModal } from "./FeedbackModal";
+import { useMachines } from "@/hooks/useMachines";
+import { useToast } from "@/hooks/use-toast";
 
 interface RecentOrder {
   id: string;
@@ -31,47 +22,40 @@ interface RecentOrder {
   amount: number;
 }
 
-const stats: DashboardStats = {
-  totalMachines: 45,
-  availableMachines: 32,
-  totalCustomers: 187,
-  activeBookings: 23,
-  monthlyRevenue: 34500,
-  customerSatisfaction: 4.7
-};
-
 const recentOrders: RecentOrder[] = [
-  {
-    id: '1',
-    customerName: 'John Smith',
-    machineName: 'John Deere 6120M',
-    date: '2024-07-24',
-    duration: '8 hours',
-    status: 'pending',
-    amount: 360
-  },
-  {
-    id: '2',
-    customerName: 'Sarah Johnson',
-    machineName: 'Case IH Axial-Flow 250',
-    date: '2024-07-23',
-    duration: '12 hours',
-    status: 'confirmed',
-    amount: 1020
-  },
-  {
-    id: '3',
-    customerName: 'Mike Brown',
-    machineName: 'New Holland T6.180',
-    date: '2024-07-22',
-    duration: '6 hours',
-    status: 'completed',
-    amount: 270
-  }
+  { id: '1', customerName: 'John Smith', machineName: 'John Deere 6120M', date: '2024-07-24', duration: '8 hours', status: 'pending', amount: 360 },
+  { id: '2', customerName: 'Sarah Johnson', machineName: 'Case IH Axial-Flow 250', date: '2024-07-23', duration: '12 hours', status: 'confirmed', amount: 1020 },
+  { id: '3', customerName: 'Mike Brown', machineName: 'New Holland T6.180', date: '2024-07-22', duration: '6 hours', status: 'completed', amount: 270 }
 ];
 
 export const AdminDashboard = () => {
-  const machineUtilization = (stats.totalMachines - stats.availableMachines) / stats.totalMachines * 100;
+  const [isAddMachineModalOpen, setIsAddMachineModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isUpdateStockModalOpen, setIsUpdateStockModalOpen] = useState(false);
+  const [isCategoriesModalOpen, setIsCategoriesModalOpen] = useState(false);
+  const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+  const { machines, addMachine, getTotalMachines, getAvailableMachinesCount, getAverageRating, getTotalRevenue } = useMachines();
+  const { toast } = useToast();
+
+  const stats = {
+    totalMachines: getTotalMachines(),
+    availableMachines: getAvailableMachinesCount(),
+    totalCustomers: 187,
+    activeBookings: 23,
+    monthlyRevenue: Math.round(getTotalRevenue()),
+    customerSatisfaction: getAverageRating()
+  };
+
+  const machineUtilization = stats.totalMachines > 0 ? ((stats.totalMachines - stats.availableMachines) / stats.totalMachines) * 100 : 0;
+
+  const handleAddMachine = (machineData: any) => {
+    try {
+      const newMachine = addMachine(machineData);
+      toast({ title: "Machine Added Successfully!", description: `${newMachine.name} has been added to your inventory.` });
+    } catch (error) {
+      toast({ title: "Error Adding Machine", description: "There was an error adding the machine. Please try again.", variant: "destructive" });
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
@@ -82,11 +66,11 @@ export const AdminDashboard = () => {
           <p className="text-muted-foreground">Manage your agricultural equipment fleet</p>
         </div>
         <div className="flex space-x-2">
-          <Button variant="outline">
+          <Button variant="outline" onClick={() => setIsSettingsModalOpen(true)}>
             <Settings className="h-4 w-4 mr-2" />
             Settings
           </Button>
-          <Button variant="agriculture">
+          <Button variant="agriculture" onClick={() => setIsAddMachineModalOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Add Machine
           </Button>
@@ -157,9 +141,7 @@ export const AdminDashboard = () => {
             <CardDescription>Add or manage machine types</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button variant="outline" className="w-full">
-              Manage Categories
-            </Button>
+            <Button variant="outline" className="w-full" onClick={() => setIsCategoriesModalOpen(true)}>Manage Categories</Button>
           </CardContent>
         </Card>
 
@@ -172,9 +154,7 @@ export const AdminDashboard = () => {
             <CardDescription>Modify machine availability</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button variant="outline" className="w-full">
-              Update Inventory
-            </Button>
+            <Button variant="outline" className="w-full" onClick={() => setIsUpdateStockModalOpen(true)}>Update Inventory</Button>
           </CardContent>
         </Card>
 
@@ -191,12 +171,10 @@ export const AdminDashboard = () => {
               <span className="text-sm">Avg Rating</span>
               <div className="flex items-center space-x-1">
                 <Star className="h-4 w-4 fill-agriculture-gold text-agriculture-gold" />
-                <span className="font-semibold">{stats.customerSatisfaction}</span>
+                <span className="font-semibold">{stats.customerSatisfaction.toFixed(1)}</span>
               </div>
             </div>
-            <Button variant="outline" className="w-full">
-              View Feedback
-            </Button>
+            <Button variant="outline" className="w-full" onClick={() => setIsFeedbackModalOpen(true)}>View Feedback</Button>
           </CardContent>
         </Card>
       </div>
@@ -211,22 +189,17 @@ export const AdminDashboard = () => {
           {recentOrders.map((order) => (
             <Card key={order.id} className="hover:shadow-soft transition-shadow">
               <CardContent className="flex items-center justify-between p-6">
-                <div className="flex items-center space-x-4">
-                  <div>
-                    <h3 className="font-semibold">{order.customerName}</h3>
-                    <p className="text-sm text-muted-foreground">{order.machineName}</p>
-                    <div className="flex items-center space-x-4 text-xs text-muted-foreground mt-1">
-                      <span>{order.date}</span>
-                      <span>•</span>
-                      <span>{order.duration}</span>
-                    </div>
+                <div>
+                  <h3 className="font-semibold">{order.customerName}</h3>
+                  <p className="text-sm text-muted-foreground">{order.machineName}</p>
+                  <div className="flex items-center space-x-4 text-xs text-muted-foreground mt-1">
+                    <span>{order.date}</span>
+                    <span>•</span>
+                    <span>{order.duration}</span>
                   </div>
                 </div>
                 <div className="flex items-center space-x-4">
-                  <Badge 
-                    variant={order.status === 'completed' ? 'secondary' : 
-                            order.status === 'confirmed' ? 'default' : 'outline'}
-                  >
+                  <Badge variant={order.status === 'completed' ? 'secondary' : order.status === 'confirmed' ? 'default' : 'outline'}>
                     {order.status}
                   </Badge>
                   <div className="text-right">
@@ -249,6 +222,13 @@ export const AdminDashboard = () => {
           ))}
         </div>
       </section>
+
+      {/* Modals */}
+      <AddMachineModal isOpen={isAddMachineModalOpen} onClose={() => setIsAddMachineModalOpen(false)} onAddMachine={handleAddMachine} />
+      <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} />
+      <UpdateStockModal isOpen={isUpdateStockModalOpen} onClose={() => setIsUpdateStockModalOpen(false)} />
+      <CategoriesModal isOpen={isCategoriesModalOpen} onClose={() => setIsCategoriesModalOpen(false)} />
+      <FeedbackModal isOpen={isFeedbackModalOpen} onClose={() => setIsFeedbackModalOpen(false)} />
     </div>
   );
 };
