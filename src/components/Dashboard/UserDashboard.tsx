@@ -5,6 +5,9 @@ import { Calendar, Clock, MapPin, Star, Tractor, Wrench, Users, Truck } from "lu
 import { useBookings } from "@/hooks/useBookings";
 import { format } from "date-fns";
 import { BookingSummary } from "./BookingSummary";
+import { BookingModal } from "@/components/Booking/BookingModal";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 // Import all machinery images
 import tractorStock from "@/assets/tractor-stock.jpg";
@@ -32,9 +35,12 @@ interface Machine {
   category: string;
   image: string;
   hourlyRate: number;
+  dailyRate: number;
   available: boolean;
   rating: number;
   location: string;
+  description: string;
+  features: string[];
 }
 
 interface Booking {
@@ -53,9 +59,12 @@ const machines: Machine[] = [
     category: 'Tractor',
     image: tractorStock,
     hourlyRate: 800,
+    dailyRate: 6000,
     available: true,
     rating: 4.8,
-    location: 'Downtown Farm Equipment'
+    location: 'Downtown Farm Equipment',
+    description: 'High-performance tractor with advanced GPS guidance system',
+    features: ['GPS Navigation', 'Climate Control', 'Premium Sound System']
   },
   {
     id: '2',
@@ -63,9 +72,12 @@ const machines: Machine[] = [
     category: 'Harvester',
     image: harvesterStock,
     hourlyRate: 1200,
+    dailyRate: 9000,
     available: true,
     rating: 4.6,
-    location: 'North Valley Equipment'
+    location: 'North Valley Equipment',
+    description: 'Advanced combine harvester with grain loss monitoring',
+    features: ['Grain Loss Monitor', 'Auto Height Control', 'Yield Mapping']
   },
   {
     id: '3',
@@ -73,9 +85,12 @@ const machines: Machine[] = [
     category: 'Harvester',
     image: harvestmasterH12,
     hourlyRate: 1000,
+    dailyRate: 7500,
     available: true,
     rating: 4.7,
-    location: 'Central Farm Services'
+    location: 'Central Farm Services',
+    description: 'Compact harvester perfect for small to medium farms',
+    features: ['4WD Drive', 'Compact Design', 'Easy Maneuverability']
   },
   {
     id: '4',
@@ -83,9 +98,12 @@ const machines: Machine[] = [
     category: 'Harvester',
     image: standardTractorHarvester,
     hourlyRate: 900,
+    dailyRate: 7000,
     available: false,
     rating: 4.5,
-    location: 'South Field Equipment'
+    location: 'South Field Equipment',
+    description: 'Versatile tractor-mounted harvester for multiple crops',
+    features: ['Tractor Mounted', 'Multi-Crop', 'Adjustable Header']
   },
   {
     id: '5',
@@ -93,9 +111,12 @@ const machines: Machine[] = [
     category: 'Loader',
     image: loadersDesktop,
     hourlyRate: 600,
+    dailyRate: 4500,
     available: true,
     rating: 4.4,
-    location: 'West Construction Equipment'
+    location: 'West Construction Equipment',
+    description: 'Heavy-duty front-end loader for material handling',
+    features: ['Heavy Duty', 'Quick Attach', 'High Lift Capacity']
   },
   {
     id: '6',
@@ -103,9 +124,12 @@ const machines: Machine[] = [
     category: 'Baler',
     image: mahindraRoundBaler,
     hourlyRate: 700,
+    dailyRate: 5500,
     available: true,
     rating: 4.3,
-    location: 'East Farm Machinery'
+    location: 'East Farm Machinery',
+    description: 'Efficient round baler for hay and straw baling',
+    features: ['Round Baling', 'Auto Tie', 'Adjustable Density']
   },
   {
     id: '7',
@@ -113,9 +137,12 @@ const machines: Machine[] = [
     category: 'Baler',
     image: mahindraStrawBaler,
     hourlyRate: 650,
+    dailyRate: 5000,
     available: true,
     rating: 4.2,
-    location: 'Central Farm Services'
+    location: 'Central Farm Services',
+    description: 'Specialized baler for straw and crop residue',
+    features: ['Straw Specific', 'High Capacity', 'Durable Construction']
   },
   {
     id: '8',
@@ -123,9 +150,12 @@ const machines: Machine[] = [
     category: 'Tractor',
     image: productJpeg,
     hourlyRate: 900,
+    dailyRate: 7000,
     available: false,
     rating: 4.9,
-    location: 'Premium Equipment Co.'
+    location: 'Premium Equipment Co.',
+    description: 'Top-of-the-line tractor with luxury features',
+    features: ['Luxury Interior', 'Advanced Tech', 'Premium Warranty']
   },
   {
     id: '9',
@@ -133,9 +163,12 @@ const machines: Machine[] = [
     category: 'Reaper',
     image: mahindraStrawReaper,
     hourlyRate: 500,
+    dailyRate: 4000,
     available: true,
     rating: 4.1,
-    location: 'South Field Equipment'
+    location: 'South Field Equipment',
+    description: 'Efficient straw reaper for crop residue management',
+    features: ['Straw Cutting', 'Adjustable Height', 'Easy Operation']
   },
   {
     id: '10',
@@ -143,9 +176,12 @@ const machines: Machine[] = [
     category: 'Thresher',
     image: mahindraBasketThresher,
     hourlyRate: 400,
+    dailyRate: 3000,
     available: true,
     rating: 4.0,
-    location: 'North Valley Equipment'
+    location: 'North Valley Equipment',
+    description: 'Traditional basket thresher for grain processing',
+    features: ['Basket Design', 'Manual Operation', 'Versatile Use']
   },
   {
     id: '11',
@@ -153,9 +189,12 @@ const machines: Machine[] = [
     category: 'Thresher',
     image: mahindraPaddyThresher,
     hourlyRate: 450,
+    dailyRate: 3500,
     available: true,
     rating: 4.2,
-    location: 'Central Farm Services'
+    location: 'Central Farm Services',
+    description: 'Specialized thresher for paddy and rice crops',
+    features: ['Paddy Specific', 'Multi-Crop', 'High Efficiency']
   },
   {
     id: '12',
@@ -163,9 +202,12 @@ const machines: Machine[] = [
     category: 'Tractor',
     image: istockTractor,
     hourlyRate: 1000,
+    dailyRate: 8000,
     available: true,
     rating: 4.7,
-    location: 'Premium Equipment Co.'
+    location: 'Premium Equipment Co.',
+    description: 'Professional grade tractor for commercial farming',
+    features: ['Commercial Grade', 'High Horsepower', 'Advanced Controls']
   },
   {
     id: '13',
@@ -173,9 +215,12 @@ const machines: Machine[] = [
     category: 'Cultivator',
     image: mildSteelPlough,
     hourlyRate: 300,
+    dailyRate: 2500,
     available: true,
     rating: 4.3,
-    location: 'East Farm Machinery'
+    location: 'East Farm Machinery',
+    description: 'Durable 5-teeth plough for soil preparation',
+    features: ['5 Teeth Design', 'Mild Steel', 'Tractor Driven']
   },
   {
     id: '14',
@@ -183,9 +228,12 @@ const machines: Machine[] = [
     category: 'Cultivator',
     image: rigidCultivator,
     hourlyRate: 350,
+    dailyRate: 2800,
     available: true,
     rating: 4.4,
-    location: 'West Construction Equipment'
+    location: 'West Construction Equipment',
+    description: '9-tynes rigid cultivator for intensive farming',
+    features: ['9 Tynes', 'Rigid Design', 'High Durability']
   },
   {
     id: '15',
@@ -193,9 +241,12 @@ const machines: Machine[] = [
     category: 'Cultivator',
     image: discHarrow,
     hourlyRate: 400,
+    dailyRate: 3200,
     available: false,
     rating: 4.1,
-    location: 'South Field Equipment'
+    location: 'South Field Equipment',
+    description: 'Disc harrow for soil breaking and leveling',
+    features: ['Disc Design', 'Soil Breaking', 'Leveling Capability']
   },
   {
     id: '16',
@@ -203,9 +254,12 @@ const machines: Machine[] = [
     category: 'Thresher',
     image: ag400PaddyThresher,
     hourlyRate: 420,
+    dailyRate: 3300,
     available: true,
     rating: 4.2,
-    location: 'Central Farm Services'
+    location: 'Central Farm Services',
+    description: 'AG400 series paddy thresher with enhanced efficiency',
+    features: ['AG400 Series', 'Paddy Specific', 'Enhanced Efficiency']
   },
   {
     id: '17',
@@ -213,9 +267,12 @@ const machines: Machine[] = [
     category: 'Rotavator',
     image: tractorRotavator,
     hourlyRate: 500,
+    dailyRate: 4000,
     available: true,
     rating: 4.5,
-    location: 'North Valley Equipment'
+    location: 'North Valley Equipment',
+    description: '18 HP tractor rotavator for soil cultivation',
+    features: ['18 HP Power', 'Soil Cultivation', 'Tractor Mounted']
   },
   {
     id: '18',
@@ -223,9 +280,12 @@ const machines: Machine[] = [
     category: 'Specialty',
     image: additionalImage,
     hourlyRate: 600,
+    dailyRate: 4800,
     available: true,
     rating: 4.3,
-    location: 'Central Farm Services'
+    location: 'Central Farm Services',
+    description: 'Specialized agricultural equipment for unique farming needs',
+    features: ['Specialty Equipment', 'Versatile Use', 'High Efficiency']
   }
 ];
 
@@ -255,12 +315,56 @@ export const UserDashboard = () => {
     getTotalSpent, 
     getUpcomingBookings,
     cancelBooking,
-    completeBooking 
+    completeBooking,
+    addBooking 
   } = useBookings();
+
+  const [selectedMachine, setSelectedMachine] = useState<any>(null);
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const { toast } = useToast();
 
   const activeBookings = getActiveBookings();
   const totalSpent = getTotalSpent();
   const upcomingBookings = getUpcomingBookings();
+
+  const handleBookMachine = (machine: any) => {
+    setSelectedMachine(machine);
+    setIsBookingModalOpen(true);
+  };
+
+  const handleConfirmBooking = (bookingData: any) => {
+    try {
+      const newBooking = addBooking({
+        equipmentId: bookingData.equipmentId,
+        equipmentName: bookingData.equipmentName,
+        startDate: bookingData.startDate,
+        endDate: bookingData.endDate,
+        duration: bookingData.duration,
+        durationType: bookingData.durationType || 'hours',
+        distance: bookingData.distance,
+        basePrice: bookingData.basePrice,
+        distancePrice: bookingData.distancePrice,
+        totalPrice: bookingData.totalPrice,
+        deliveryAddress: bookingData.deliveryAddress,
+        contactNumber: bookingData.contactNumber,
+        specialRequirements: bookingData.specialRequirements
+      });
+
+      toast({
+        title: "Booking Confirmed!",
+        description: `Your booking for ${bookingData.equipmentName} has been successfully created. Booking ID: ${newBooking.id}`,
+      });
+
+      setIsBookingModalOpen(false);
+      setSelectedMachine(null);
+    } catch (error) {
+      toast({
+        title: "Booking Failed",
+        description: "There was an error creating your booking. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
@@ -344,8 +448,13 @@ export const UserDashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="flex space-x-2">
-                  <Button variant="primary" className="flex-1">
-                    Book Now
+                  <Button 
+                    variant="primary" 
+                    className="flex-1"
+                    disabled={!machine.available}
+                    onClick={() => handleBookMachine(machine)}
+                  >
+                    {machine.available ? 'Book Now' : 'Currently Rented'}
                   </Button>
                   <Button variant="outline">
                     Details
@@ -445,6 +554,17 @@ export const UserDashboard = () => {
 
       {/* Booking Summary */}
       <BookingSummary />
+
+      {/* Booking Modal */}
+      <BookingModal
+        equipment={selectedMachine}
+        isOpen={isBookingModalOpen}
+        onClose={() => {
+          setIsBookingModalOpen(false);
+          setSelectedMachine(null);
+        }}
+        onConfirm={handleConfirmBooking}
+      />
     </div>
   );
 };

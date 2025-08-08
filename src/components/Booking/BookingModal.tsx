@@ -48,11 +48,15 @@ interface BookingData {
   specialRequirements: string;
 }
 
-const distanceRates = {
-  local: { rate: 50, maxDistance: 50 }, // ₹50/km for local delivery (0-50km)
-  regional: { rate: 75, maxDistance: 200 }, // ₹75/km for regional delivery (51-200km)
-  longDistance: { rate: 100, maxDistance: 500 } // ₹100/km for long distance (201-500km)
+// Fixed delivery amounts for specific locations
+const deliveryAmounts = {
+  'karkala': 500,
+  'udupi': 800,
+  'moodabidri': 400
 };
+
+// Default delivery amount for other locations
+const defaultDeliveryAmount = 600;
 
 export const BookingModal = ({ equipment, isOpen, onClose, onConfirm }: BookingModalProps) => {
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
@@ -65,23 +69,31 @@ export const BookingModal = ({ equipment, isOpen, onClose, onConfirm }: BookingM
   const [distance, setDistance] = useState<number>(0);
   const [isCalculating, setIsCalculating] = useState(false);
 
-  // Calculate distance based on delivery address (simplified calculation)
-  const calculateDistance = async (address: string) => {
+  // Calculate delivery amount based on address
+  const calculateDeliveryAmount = async (address: string) => {
     if (!address.trim()) return 0;
     
     setIsCalculating(true);
     
-    // Simulate distance calculation based on address
-    // In a real app, you would use Google Maps API or similar
-    const mockDistance = Math.floor(Math.random() * 150) + 10; // 10-160 km
+    // Check if address contains any of the specific locations
+    const addressLower = address.toLowerCase();
+    let deliveryAmount = defaultDeliveryAmount;
+    
+    if (addressLower.includes('karkala')) {
+      deliveryAmount = deliveryAmounts.karkala;
+    } else if (addressLower.includes('udupi')) {
+      deliveryAmount = deliveryAmounts.udupi;
+    } else if (addressLower.includes('moodabidri')) {
+      deliveryAmount = deliveryAmounts.moodabidri;
+    }
     
     setTimeout(() => {
-      setDistance(mockDistance);
+      setDistance(deliveryAmount); // Using distance state to store delivery amount
       setIsCalculating(false);
     }, 1000);
   };
 
-  // Calculate pricing based on distance and duration
+  // Calculate pricing based on duration and delivery amount
   const calculatePricing = () => {
     if (!equipment || !startDate || !endDate || distance === 0) return null;
 
@@ -89,23 +101,13 @@ export const BookingModal = ({ equipment, isOpen, onClose, onConfirm }: BookingM
       ? equipment.hourlyRate * duration 
       : equipment.dailyRate * duration;
 
-    let distancePrice = 0;
-    if (distance <= distanceRates.local.maxDistance) {
-      distancePrice = distance * distanceRates.local.rate;
-    } else if (distance <= distanceRates.regional.maxDistance) {
-      distancePrice = (distanceRates.local.maxDistance * distanceRates.local.rate) +
-                     ((distance - distanceRates.local.maxDistance) * distanceRates.regional.rate);
-    } else {
-      distancePrice = (distanceRates.local.maxDistance * distanceRates.local.rate) +
-                     ((distanceRates.regional.maxDistance - distanceRates.local.maxDistance) * distanceRates.regional.rate) +
-                     ((distance - distanceRates.regional.maxDistance) * distanceRates.longDistance.rate);
-    }
-
-    const totalPrice = basePrice + distancePrice;
+    // distance variable now contains the delivery amount
+    const deliveryAmount = distance;
+    const totalPrice = basePrice + deliveryAmount;
 
     return {
       basePrice,
-      distancePrice,
+      distancePrice: deliveryAmount,
       totalPrice
     };
   };
@@ -269,10 +271,10 @@ export const BookingModal = ({ equipment, isOpen, onClose, onConfirm }: BookingM
                   />
                   <Button 
                     variant="outline" 
-                    onClick={() => calculateDistance(deliveryAddress)}
+                    onClick={() => calculateDeliveryAmount(deliveryAddress)}
                     disabled={!deliveryAddress.trim() || isCalculating}
                   >
-                    {isCalculating ? 'Calculating...' : 'Calculate Distance'}
+                    {isCalculating ? 'Calculating...' : 'Calculate Delivery Amount'}
                   </Button>
                 </div>
               </div>
@@ -296,7 +298,7 @@ export const BookingModal = ({ equipment, isOpen, onClose, onConfirm }: BookingM
               </div>
             </div>
 
-            {/* Distance and Pricing */}
+            {/* Delivery Amount and Pricing */}
             {distance > 0 && pricing && (
               <Card className="bg-muted/50">
                 <CardContent className="p-4">
@@ -304,9 +306,9 @@ export const BookingModal = ({ equipment, isOpen, onClose, onConfirm }: BookingM
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <Truck className="h-4 w-4 text-primary" />
-                        <span className="font-medium">Distance</span>
+                        <span className="font-medium">Delivery Amount</span>
                       </div>
-                      <span className="font-semibold">{distance} km</span>
+                      <span className="font-semibold">₹{distance}</span>
                     </div>
 
                     <div className="flex items-center justify-between">
