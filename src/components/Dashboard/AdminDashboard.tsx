@@ -22,6 +22,20 @@ interface RecentOrder {
   amount: number;
 }
 
+interface Machine {
+  id: string;
+  name: string;
+  category: string;
+  image: string;
+  hourlyRate: number;
+  dailyRate: number;
+  available: boolean;
+  rating: number;
+  location: string;
+  description: string;
+  features: string[];
+}
+
 const recentOrders: RecentOrder[] = [
   { id: '1', customerName: 'John Smith', machineName: 'John Deere 6120M', date: '2024-07-24', duration: '8 hours', status: 'pending', amount: 360 },
   { id: '2', customerName: 'Sarah Johnson', machineName: 'Case IH Axial-Flow 250', date: '2024-07-23', duration: '12 hours', status: 'confirmed', amount: 1020 },
@@ -48,9 +62,9 @@ export const AdminDashboard = () => {
 
   const machineUtilization = stats.totalMachines > 0 ? ((stats.totalMachines - stats.availableMachines) / stats.totalMachines) * 100 : 0;
 
-  const handleAddMachine = (machineData: any) => {
+  const handleAddMachine = async (machineData: Omit<Machine, 'id'>) => {
     try {
-      const newMachine = addMachine(machineData);
+      const newMachine = await addMachine(machineData) as Machine;
       toast({ title: "Machine Added Successfully!", description: `${newMachine.name} has been added to your inventory.` });
     } catch (error) {
       toast({ title: "Error Adding Machine", description: "There was an error adding the machine. Please try again.", variant: "destructive" });
@@ -198,24 +212,16 @@ export const AdminDashboard = () => {
                     <span>{order.duration}</span>
                   </div>
                 </div>
-                <div className="flex items-center space-x-4">
-                  <Badge variant={order.status === 'completed' ? 'secondary' : order.status === 'confirmed' ? 'default' : 'outline'}>
-                    {order.status}
+                <div className="text-right">
+                  <div className="font-bold text-lg">₹{order.amount}</div>
+                  <Badge 
+                    variant={
+                      order.status === 'completed' ? 'secondary' : 
+                      order.status === 'confirmed' ? 'default' : 'outline'
+                    }
+                  >
+                    {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                   </Badge>
-                  <div className="text-right">
-                    <div className="font-semibold">₹{order.amount}</div>
-                  </div>
-                  <div className="flex space-x-2">
-                    {order.status === 'pending' && (
-                      <>
-                        <Button variant="primary" size="sm">Approve</Button>
-                        <Button variant="outline" size="sm">Decline</Button>
-                      </>
-                    )}
-                    {order.status === 'confirmed' && (
-                      <Button variant="outline" size="sm">Contact</Button>
-                    )}
-                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -224,11 +230,27 @@ export const AdminDashboard = () => {
       </section>
 
       {/* Modals */}
-      <AddMachineModal isOpen={isAddMachineModalOpen} onClose={() => setIsAddMachineModalOpen(false)} onAddMachine={handleAddMachine} />
-      <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} />
-      <UpdateStockModal isOpen={isUpdateStockModalOpen} onClose={() => setIsUpdateStockModalOpen(false)} />
-      <CategoriesModal isOpen={isCategoriesModalOpen} onClose={() => setIsCategoriesModalOpen(false)} />
-      <FeedbackModal isOpen={isFeedbackModalOpen} onClose={() => setIsFeedbackModalOpen(false)} />
+      <AddMachineModal
+        isOpen={isAddMachineModalOpen}
+        onClose={() => setIsAddMachineModalOpen(false)}
+        onAddMachine={handleAddMachine}
+      />
+      <SettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+      />
+      <UpdateStockModal
+        isOpen={isUpdateStockModalOpen}
+        onClose={() => setIsUpdateStockModalOpen(false)}
+      />
+      <CategoriesModal
+        isOpen={isCategoriesModalOpen}
+        onClose={() => setIsCategoriesModalOpen(false)}
+      />
+      <FeedbackModal
+        isOpen={isFeedbackModalOpen}
+        onClose={() => setIsFeedbackModalOpen(false)}
+      />
     </div>
   );
 };

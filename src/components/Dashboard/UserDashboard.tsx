@@ -289,25 +289,6 @@ const machines: Machine[] = [
   }
 ];
 
-const recentBookings: Booking[] = [
-  {
-    id: '1',
-    machineName: 'John Deere 6120M',
-    date: '2024-07-20',
-    duration: '8 hours',
-    status: 'completed',
-    cost: 30000
-  },
-  {
-    id: '2',
-    machineName: 'Case IH Axial-Flow 250',
-    date: '2024-07-25',
-    duration: '6 hours',
-    status: 'confirmed',
-    cost: 42500
-  }
-];
-
 export const UserDashboard = () => {
   const { 
     bookings, 
@@ -319,7 +300,7 @@ export const UserDashboard = () => {
     addBooking 
   } = useBookings();
 
-  const [selectedMachine, setSelectedMachine] = useState<any>(null);
+  const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const { toast } = useToast();
 
@@ -327,14 +308,14 @@ export const UserDashboard = () => {
   const totalSpent = getTotalSpent();
   const upcomingBookings = getUpcomingBookings();
 
-  const handleBookMachine = (machine: any) => {
+  const handleBookMachine = (machine: Machine) => {
     setSelectedMachine(machine);
     setIsBookingModalOpen(true);
   };
 
-  const handleConfirmBooking = (bookingData: any) => {
+  const handleConfirmBooking = async (bookingData: any) => {
     try {
-      const newBooking = addBooking({
+      const newBooking = await addBooking({
         equipmentId: bookingData.equipmentId,
         equipmentName: bookingData.equipmentName,
         startDate: bookingData.startDate,
@@ -421,6 +402,10 @@ export const UserDashboard = () => {
                   src={machine.image} 
                   alt={machine.name}
                   className="w-full h-48 object-cover"
+                  onError={(e) => {
+                    // Fallback image if the main image fails to load
+                    (e.target as HTMLImageElement).src = tractorStock;
+                  }}
                 />
                 <Badge 
                   className={`absolute top-2 right-2 ${machine.available ? 'bg-agriculture-crop' : 'bg-destructive'}`}

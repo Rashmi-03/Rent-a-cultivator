@@ -1,8 +1,9 @@
-import { Router } from 'express';
+import express from 'express';
 import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
+import Booking from '../models/Booking.js';
 
-const router = Router();
+const router = express.Router();
 
 router.post('/register', async (req, res) => {
   try {
@@ -106,6 +107,103 @@ router.put('/admin/update-credentials', async (req, res) => {
     });
   } catch (err) {
     return res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
+// Booking routes
+router.post('/bookings', async (req, res) => {
+  try {
+    const {
+      equipmentId,
+      equipmentName,
+      startDate,
+      endDate,
+      duration,
+      durationType,
+      distance,
+      basePrice,
+      distancePrice,
+      totalPrice,
+      deliveryAddress,
+      contactNumber,
+      specialRequirements,
+      userId
+    } = req.body;
+
+    const newBooking = new Booking({
+      user: userId,
+      machine: equipmentId,
+      quantity: 1,
+      status: 'pending',
+      startDate,
+      endDate,
+      duration,
+      durationType,
+      distance,
+      basePrice,
+      distancePrice,
+      totalPrice,
+      deliveryAddress,
+      contactNumber,
+      specialRequirements,
+      equipmentId,
+      equipmentName
+    });
+
+    const savedBooking = await newBooking.save();
+    res.status(201).json(savedBooking);
+  } catch (error) {
+    console.error('Error creating booking:', error);
+    res.status(500).json({ message: 'Failed to create booking' });
+  }
+});
+
+router.get('/bookings/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const bookings = await Booking.find({ user: userId }).sort({ createdAt: -1 });
+    res.json(bookings);
+  } catch (error) {
+    console.error('Error fetching bookings:', error);
+    res.status(500).json({ message: 'Failed to fetch bookings' });
+  }
+});
+
+router.put('/bookings/:bookingId/status', async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const { status } = req.body;
+    
+    const updatedBooking = await Booking.findByIdAndUpdate(
+      bookingId,
+      { status },
+      { new: true }
+    );
+    
+    if (!updatedBooking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+    
+    res.json(updatedBooking);
+  } catch (error) {
+    console.error('Error updating booking status:', error);
+    res.status(500).json({ message: 'Failed to update booking status' });
+  }
+});
+
+router.delete('/bookings/:bookingId', async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const deletedBooking = await Booking.findByIdAndDelete(bookingId);
+    
+    if (!deletedBooking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+    
+    res.json({ message: 'Booking deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting booking:', error);
+    res.status(500).json({ message: 'Failed to delete booking' });
   }
 });
 

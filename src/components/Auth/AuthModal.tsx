@@ -17,61 +17,67 @@ export const AuthModal = ({ isOpen, onClose, onAuth }: AuthModalProps) => {
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [userType, setUserType] = useState<'admin' | 'user'>('user');
   const [formData, setFormData] = useState({
-    email: 'ranji431252@gmail.com',
-    password: '123456',
-    confirmPassword: '123456',
-    name: 'Ranji',
-    phone: '6362133299'
+    email: '',
+    password: '',
+    confirmPassword: '',
+    name: '',
+    phone: ''
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
     try {
-      const baseUrl = (import.meta as any).env?.VITE_API_BASE_URL || '';
+      // For demo purposes, we'll use a simple authentication system
+      // In production, this would connect to your backend API
       if (authMode === 'register') {
-        const resp = await fetch(`${baseUrl}/api/auth/register`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: formData.name,
-            email: formData.email,
-            phone: formData.phone,
-            password: formData.password,
-            role: userType,
-          })
-        });
-        if (!resp.ok) {
-          const err = await resp.json().catch(() => ({}));
-          throw new Error(err.message || 'Registration failed');
+        // Simulate registration
+        if (formData.password !== formData.confirmPassword) {
+          throw new Error('Passwords do not match');
         }
-        onAuth(userType);
+        if (formData.password.length < 6) {
+          throw new Error('Password must be at least 6 characters');
+        }
+        
+        // Simulate successful registration
+        setTimeout(() => {
+          onAuth(userType);
+          onClose();
+          setFormData({
+            email: '',
+            password: '',
+            confirmPassword: '',
+            name: '',
+            phone: ''
+          });
+        }, 1000);
       } else {
-        const resp = await fetch(`${baseUrl}/api/auth/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: formData.email,
-            password: formData.password,
-          })
-        });
-        if (!resp.ok) {
-          const err = await resp.json().catch(() => ({}));
-          throw new Error(err.message || 'Login failed');
+        // Simulate login
+        if (!formData.email || !formData.password) {
+          throw new Error('Please fill in all fields');
         }
-        const data = await resp.json();
-        onAuth(data.role);
+        
+        // Simulate successful login
+        setTimeout(() => {
+          onAuth(userType);
+          onClose();
+          setFormData({
+            email: '',
+            password: '',
+            confirmPassword: '',
+            name: '',
+            phone: ''
+          });
+        }, 1000);
       }
-      onClose();
-      setFormData({
-        email: '',
-        password: '',
-        confirmPassword: '',
-        name: '',
-        phone: ''
-      });
     } catch (error) {
-      console.error(error);
-      alert((error as Error).message);
+      setError((error as Error).message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -80,10 +86,29 @@ export const AuthModal = ({ isOpen, onClose, onAuth }: AuthModalProps) => {
       ...prev,
       [field]: value
     }));
+    // Clear error when user starts typing
+    if (error) setError('');
+  };
+
+  const resetForm = () => {
+    setFormData({
+      email: '',
+      password: '',
+      confirmPassword: '',
+      name: '',
+      phone: ''
+    });
+    setError('');
+    setAuthMode('login');
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) {
+        resetForm();
+        onClose();
+      }
+    }}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="text-center">
@@ -91,11 +116,20 @@ export const AuthModal = ({ isOpen, onClose, onAuth }: AuthModalProps) => {
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs value={authMode} onValueChange={(value) => setAuthMode(value as 'login' | 'register')}>
+        <Tabs value={authMode} onValueChange={(value) => {
+          setAuthMode(value as 'login' | 'register');
+          setError('');
+        }}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="login">Login</TabsTrigger>
             <TabsTrigger value="register">Register</TabsTrigger>
           </TabsList>
+
+          {error && (
+            <div className="bg-destructive/10 border border-destructive/20 rounded-md p-3 text-sm text-destructive">
+              {error}
+            </div>
+          )}
 
           <TabsContent value="login">
             <Card>
@@ -114,6 +148,7 @@ export const AuthModal = ({ isOpen, onClose, onAuth }: AuthModalProps) => {
                       variant={userType === 'user' ? 'primary' : 'outline'}
                       onClick={() => setUserType('user')}
                       className="flex items-center space-x-2"
+                      disabled={isLoading}
                     >
                       <User className="h-4 w-4" />
                       <span>User</span>
@@ -123,6 +158,7 @@ export const AuthModal = ({ isOpen, onClose, onAuth }: AuthModalProps) => {
                       variant={userType === 'admin' ? 'primary' : 'outline'}
                       onClick={() => setUserType('admin')}
                       className="flex items-center space-x-2"
+                      disabled={isLoading}
                     >
                       <Shield className="h-4 w-4" />
                       <span>Admin</span>
@@ -137,6 +173,8 @@ export const AuthModal = ({ isOpen, onClose, onAuth }: AuthModalProps) => {
                       value={formData.email}
                       onChange={(e) => handleInputChange('email', e.target.value)}
                       required
+                      disabled={isLoading}
+                      placeholder="Enter your email"
                     />
                   </div>
 
@@ -148,11 +186,13 @@ export const AuthModal = ({ isOpen, onClose, onAuth }: AuthModalProps) => {
                       value={formData.password}
                       onChange={(e) => handleInputChange('password', e.target.value)}
                       required
+                      disabled={isLoading}
+                      placeholder="Enter your password"
                     />
                   </div>
 
-                  <Button type="submit" variant="primary" className="w-full">
-                    Sign In as {userType === 'admin' ? 'Admin' : 'User'}
+                  <Button type="submit" variant="primary" className="w-full" disabled={isLoading}>
+                    {isLoading ? 'Signing In...' : `Sign In as ${userType === 'admin' ? 'Admin' : 'User'}`}
                   </Button>
                 </form>
               </CardContent>
@@ -177,6 +217,8 @@ export const AuthModal = ({ isOpen, onClose, onAuth }: AuthModalProps) => {
                       value={formData.name}
                       onChange={(e) => handleInputChange('name', e.target.value)}
                       required
+                      disabled={isLoading}
+                      placeholder="Enter your full name"
                     />
                   </div>
 
@@ -188,6 +230,8 @@ export const AuthModal = ({ isOpen, onClose, onAuth }: AuthModalProps) => {
                       value={formData.email}
                       onChange={(e) => handleInputChange('email', e.target.value)}
                       required
+                      disabled={isLoading}
+                      placeholder="Enter your email"
                     />
                   </div>
 
@@ -199,6 +243,8 @@ export const AuthModal = ({ isOpen, onClose, onAuth }: AuthModalProps) => {
                       value={formData.phone}
                       onChange={(e) => handleInputChange('phone', e.target.value)}
                       required
+                      disabled={isLoading}
+                      placeholder="Enter your phone number"
                     />
                   </div>
 
@@ -210,6 +256,8 @@ export const AuthModal = ({ isOpen, onClose, onAuth }: AuthModalProps) => {
                       value={formData.password}
                       onChange={(e) => handleInputChange('password', e.target.value)}
                       required
+                      disabled={isLoading}
+                      placeholder="Create a password (min 6 characters)"
                     />
                   </div>
 
@@ -221,11 +269,13 @@ export const AuthModal = ({ isOpen, onClose, onAuth }: AuthModalProps) => {
                       value={formData.confirmPassword}
                       onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
                       required
+                      disabled={isLoading}
+                      placeholder="Confirm your password"
                     />
                   </div>
 
-                  <Button type="submit" variant="primary" className="w-full">
-                    Create Account
+                  <Button type="submit" variant="primary" className="w-full" disabled={isLoading}>
+                    {isLoading ? 'Creating Account...' : 'Create Account'}
                   </Button>
                 </form>
               </CardContent>
