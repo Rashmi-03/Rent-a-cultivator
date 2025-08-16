@@ -1,97 +1,97 @@
-const express = require("express");
-const mongoose = require("mongoose");
+import 'dotenv/config';
+import express from 'express';
+import mongoose from 'mongoose';
+import cors from 'cors';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import authRouter from './backend/routes/auth.js';
+import bcrypt from 'bcryptjs';
+import User from './backend/models/User.js';
 
-const Booking = require("./models/Booking");
-const Machine = require("./models/machine");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
+app.use(cors({
+  origin: [
+    'http://localhost:8080',
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://127.0.0.1:8080',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:3000'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
 
-const PORT = 5000;
+const PORT = process.env.PORT || 3000;
+const MONGODB_URI = process.env.MONGODB_URI;
 
-// Direct MongoDB connection link (hardcoded here)
-const mongoURI = "mongodb+srv://Rashmi04:<1234567890>@cluster0.z8wkr5v.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+if (!MONGODB_URI) {
+  console.error('Missing MONGODB_URI in environment. Create a .env file with MONGODB_URI.');
+  process.exit(1);
+}
 
-// Replace with your actual MongoDB connection string
-mongoose
-  .connect(mongoURI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => console.log("MongoDB connected successfully"))
-  .catch((err) => console.error("MongoDB connection error:", err));
-
-// Book a machine
-app.post("/book", async (req, res) => {
-  const { userId, machineId, quantity } = req.body;
-
+async function startServer() {
   try {
-    const machine = await Machine.findById(machineId);
-    if (!machine) return res.status(404).json({ message: "Machine not found" });
+    await mongoose.connect(MONGODB_URI);
+    console.log('Connected to MongoDB');
 
-    if (machine.stock < quantity) {
-      return res.status(400).json({ message: "Not enough stock available" });
-    }
+    // Create a default admin if not present
+    const ensureAdminUser = async () => {
+      const adminName = process.env.ADMIN_NAME || 'Admin';
+      const adminEmail = (process.env.ADMIN_EMAIL || 'admin@example.com').toLowerCase().trim();
+      const adminPassword = process.env.ADMIN_PASSWORD || 'Admin123!';
 
-    const booking = new Booking({ user: userId, machine: machineId, quantity });
-    await booking.save();
+      let adminUser = await User.findOne({ email: adminEmail });
+      if (!adminUser) {
+        const passwordHash = await bcrypt.hash(adminPassword, 10);
+        adminUser = await User.create({
+          name: adminName,
+          email: adminEmail,
+          phone: process.env.ADMIN_PHONE || '0000000000',
+          passwordHash,
+          role: 'admin',
+        });
+        console.log(`Default admin created: ${adminEmail}`);
+      } else if (adminUser.role !== 'admin') {
+        adminUser.role = 'admin';
+        await adminUser.save();
+        console.log(`Existing user promoted to admin: ${adminEmail}`);
+      }
+    };
+    await ensureAdminUser();
 
-    machine.stock -= quantity;
-    await machine.save();
+    app.get('/health', (req, res) => {
+      const connectionState = mongoose.connection.readyState; // 1 = connected
+      res.json({ status: 'ok', dbConnected: connectionState === 1 });
+    });
 
-    res.status(201).json({ message: "Booking successful", booking });
+    app.use('/api/auth', authRouter);
+
+    // Serve static files from the frontend build
+    app.use(express.static(path.join(__dirname, 'dist')));
+
+    // Handle all other routes for SPA
+    app.get(['/', '/dashboard', '/machines', '/bookings', '/profile'], (req, res) => {
+      res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+    });
+    
+    // Final catch-all for any other routes
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+    });
+
+    app.listen(PORT, () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
   } catch (error) {
-    res.status(500).json({ message: "Booking failed", error });
+    console.error('Failed to connect to MongoDB or start server:', error);
+    process.exit(1);
   }
-});
+}
 
-// Get all bookings
-app.get("/all", async (req, res) => {
-  try {
-    const bookings = await Booking.find().populate("user").populate("machine");
-    res.status(200).json(bookings);
-  } catch (error) {
-    res.status(500).json({ message: "Failed to get bookings", error });
-  }
-});
+startServer();
 
-// Accept booking
-app.patch("/accept/:id", async (req, res) => {
-  try {
-    const booking = await Booking.findByIdAndUpdate(
-      req.params.id,
-      { status: "accepted" },
-      { new: true }
-    );
-    res.json({ message: "Booking accepted", booking });
-  } catch (error) {
-    res.status(500).json({ message: "Failed to accept booking", error });
-  }
-});
-
-// Reject booking and restore stock
-app.patch("/reject/:id", async (req, res) => {
-  try {
-    const booking = await Booking.findById(req.params.id).populate("machine");
-    if (!booking) return res.status(404).json({ message: "Booking not found" });
-
-    booking.status = "rejected";
-    await booking.save();
-
-    booking.machine.stock += booking.quantity;
-    await booking.machine.save();
-
-    res.json({ message: "Booking rejected and stock restored", booking });
-  } catch (error) {
-    res.status(500).json({ message: "Failed to reject booking", error });
-  }
-});
-
-// Root route
-app.get("/", (req, res) => {
-  res.send("Cultivator Rental System backend is running.");
-});
-
-app.listen(PORT, () => {
-  console.log(`Server is running at http://localhost:${PORT}`);
-});

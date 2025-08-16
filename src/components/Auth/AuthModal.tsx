@@ -17,25 +17,62 @@ export const AuthModal = ({ isOpen, onClose, onAuth }: AuthModalProps) => {
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [userType, setUserType] = useState<'admin' | 'user'>('user');
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    confirmPassword: '',
-    name: '',
-    phone: ''
+    email: 'ranji431252@gmail.com',
+    password: '123456',
+    confirmPassword: '123456',
+    name: 'Ranji',
+    phone: '6362133299'
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock authentication - in real app, this would call API
-    onAuth(userType);
-    onClose();
-    setFormData({
-      email: '',
-      password: '',
-      confirmPassword: '',
-      name: '',
-      phone: ''
-    });
+    try {
+      const baseUrl = (import.meta as any).env?.VITE_API_BASE_URL || '';
+      if (authMode === 'register') {
+        const resp = await fetch(`${baseUrl}/api/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            password: formData.password,
+            role: userType,
+          })
+        });
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({}));
+          throw new Error(err.message || 'Registration failed');
+        }
+        onAuth(userType);
+      } else {
+        const resp = await fetch(`${baseUrl}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password,
+          })
+        });
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({}));
+          throw new Error(err.message || 'Login failed');
+        }
+        const data = await resp.json();
+        onAuth(data.role);
+      }
+      onClose();
+      setFormData({
+        email: '',
+        password: '',
+        confirmPassword: '',
+        name: '',
+        phone: ''
+      });
+    } catch (error) {
+      console.error(error);
+      alert((error as Error).message);
+    }
   };
 
   const handleInputChange = (field: string, value: string) => {

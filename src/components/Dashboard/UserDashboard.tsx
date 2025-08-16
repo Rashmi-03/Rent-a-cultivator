@@ -482,16 +482,16 @@ export const UserDashboard = () => {
             </Card>
           ) : (
             bookings.slice(0, 5).map((booking) => (
-              <Card key={booking.id}>
+            <Card key={booking.id}>
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <div>
+                  <div>
                       <h3 className="font-semibold text-lg">{booking.equipmentName}</h3>
                       <div className="flex items-center space-x-4 text-sm text-muted-foreground mt-1">
                         <span>{format(booking.startDate, 'MMM dd, yyyy')}</span>
                         <span>•</span>
                         <span>{booking.duration} {booking.durationType}</span>
-                        <span>•</span>
+                      <span>•</span>
                         <div className="flex items-center space-x-1">
                           <Truck className="h-3 w-3" />
                           <span>{booking.distance} km</span>
@@ -508,7 +508,7 @@ export const UserDashboard = () => {
                   
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      <Badge 
+                  <Badge 
                         variant={
                           booking.status === 'completed' ? 'secondary' : 
                           booking.status === 'confirmed' ? 'default' : 
@@ -516,7 +516,7 @@ export const UserDashboard = () => {
                         }
                       >
                         {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
-                      </Badge>
+                  </Badge>
                       <span className="text-sm text-muted-foreground">
                         {format(booking.createdAt, 'MMM dd, yyyy')}
                       </span>
@@ -544,9 +544,9 @@ export const UserDashboard = () => {
                         </Button>
                       )}
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                </div>
+              </CardContent>
+            </Card>
             ))
           )}
         </div>

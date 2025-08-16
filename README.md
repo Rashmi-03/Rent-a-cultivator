@@ -2,6 +2,32 @@
 
 ## Project info
 
+### Backend setup
+
+1. Create a `.env` file in the project root with:
+
+```
+MONGODB_URI="your-mongodb-atlas-connection-string"
+PORT=3000
+```
+
+2. Start the server:
+
+```
+npm run start
+```
+
+3. Health check:
+
+Visit `http://localhost:3000/health` to see `{ status: "ok", dbConnected: true }` when MongoDB is connected.
+
+### Auth API
+
+- POST `/api/auth/register` body: `{ name, email, phone, password, role: 'user' | 'admin' }`
+- POST `/api/auth/login` body: `{ email, password }`
+
+Set frontend env `VITE_API_BASE_URL` to point at your backend (default: `http://localhost:5001`).
+
 
 ## How can I edit this code?
 
@@ -60,4 +86,4 @@ Yes, you can!
 
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+
