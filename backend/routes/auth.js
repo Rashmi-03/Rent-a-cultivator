@@ -2,6 +2,7 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
 import Booking from '../models/Booking.js';
+import Machine from '../models/machine.js';
 
 const router = express.Router();
 
@@ -204,6 +205,128 @@ router.delete('/bookings/:bookingId', async (req, res) => {
   } catch (error) {
     console.error('Error deleting booking:', error);
     res.status(500).json({ message: 'Failed to delete booking' });
+  }
+});
+
+// Machine management routes
+router.post('/machines', async (req, res) => {
+  try {
+    const {
+      name,
+      category,
+      image,
+      hourlyRate,
+      dailyRate,
+      available,
+      rating,
+      location,
+      description,
+      features,
+      stock
+    } = req.body;
+
+    if (!name || !category || !image || !hourlyRate || !dailyRate || !location || !description) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    // Validate image data (should be base64 string)
+    if (!image.startsWith('data:image/')) {
+      return res.status(400).json({ message: 'Invalid image format. Must be a valid image file.' });
+    }
+
+    // Validate image size (base64 strings are about 33% larger than original file)
+    if (image.length > 10000000) { // ~10MB limit
+      return res.status(400).json({ message: 'Image too large. Please use an image smaller than 7MB.' });
+    }
+
+    // Validate pricing
+    if (hourlyRate < 0 || dailyRate < 0) {
+      return res.status(400).json({ message: 'Pricing must be positive numbers' });
+    }
+
+    const newMachine = new Machine({
+      name: name.trim(),
+      category: category.trim(),
+      image,
+      hourlyRate,
+      dailyRate,
+      available: available !== undefined ? available : true,
+      rating: rating || 4.0,
+      location: location.trim(),
+      description: description.trim(),
+      features: features || [],
+      stock: stock || 1
+    });
+
+    const savedMachine = await newMachine.save();
+    res.status(201).json(savedMachine);
+  } catch (error) {
+    console.error('Error creating machine:', error);
+    res.status(500).json({ message: 'Failed to create machine' });
+  }
+});
+
+router.get('/machines', async (req, res) => {
+  try {
+    const machines = await Machine.find().sort({ createdAt: -1 });
+    res.json(machines);
+  } catch (error) {
+    console.error('Error fetching machines:', error);
+    res.status(500).json({ message: 'Failed to fetch machines' });
+  }
+});
+
+router.get('/machines/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const machine = await Machine.findById(id);
+    
+    if (!machine) {
+      return res.status(404).json({ message: 'Machine not found' });
+    }
+    
+    res.json(machine);
+  } catch (error) {
+    console.error('Error fetching machine:', error);
+    res.status(500).json({ message: 'Failed to fetch machine' });
+  }
+});
+
+router.put('/machines/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+    
+    const updatedMachine = await Machine.findByIdAndUpdate(
+      id,
+      updates,
+      { new: true, runValidators: true }
+    );
+    
+    if (!updatedMachine) {
+      return res.status(404).json({ message: 'Machine not found' });
+    }
+    
+    res.json(updatedMachine);
+  } catch (error) {
+    console.error('Error updating machine:', error);
+    res.status(500).json({ message: 'Failed to update machine' });
+  }
+});
+
+router.delete('/machines/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedMachine = await Machine.findByIdAndDelete(id);
+    
+    if (!deletedMachine) {
+      return res.status(404).json({ message: 'Machine not found' });
+    }
+    
+    res.json({ message: 'Machine deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting machine:', error);
+    res.status(500).json({ message: 'Failed to delete machine' });
   }
 });
 

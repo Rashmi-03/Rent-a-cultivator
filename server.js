@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 import authRouter from './backend/routes/auth.js';
 import bcrypt from 'bcryptjs';
 import User from './backend/models/User.js';
+import Machine from './backend/models/machine.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -66,23 +67,193 @@ async function startServer() {
 
     app.get('/health', (req, res) => {
       const connectionState = mongoose.connection.readyState; // 1 = connected
-      res.json({ status: 'ok', dbConnected: connectionState === 1 });
+      res.json({ 
+        status: 'ok', 
+        dbConnected: connectionState === 1,
+        connectionState: connectionState,
+        message: connectionState === 1 ? 'Connected to MongoDB' : 'Not connected to MongoDB'
+      });
+    });
+
+    // Test database connection with machine model
+    app.get('/test-db', async (req, res) => {
+      try {
+        const connectionState = mongoose.connection.readyState;
+        if (connectionState !== 1) {
+          return res.status(500).json({ 
+            error: 'Database not connected', 
+            connectionState: connectionState 
+          });
+        }
+        
+        // Test if we can create a machine document (without saving)
+        const testMachine = new Machine({
+          name: 'Test Machine',
+          category: 'Test',
+          image: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+          hourlyRate: 100,
+          dailyRate: 800,
+          location: 'Test Location',
+          description: 'Test Description'
+        });
+        
+        // Test if validation passes
+        await testMachine.validate();
+        
+        res.json({ 
+          status: 'Database connection and model validation successful',
+          connectionState: connectionState,
+          modelValidation: 'passed'
+        });
+      } catch (error) {
+        res.status(500).json({ 
+          error: 'Database test failed', 
+          message: error.message,
+          connectionState: mongoose.connection.readyState
+        });
+      }
     });
 
     app.use('/api/auth', authRouter);
 
-    // Serve static files from the frontend build
-    app.use(express.static(path.join(__dirname, 'dist')));
+    // Machine routes
+    app.post('/api/machines', async (req, res) => {
+      try {
+        console.log('Received machine creation request:', req.body);
+        
+        const {
+          name,
+          category,
+          image,
+          hourlyRate,
+          dailyRate,
+          available,
+          rating,
+          location,
+          description,
+          features,
+          stock
+        } = req.body;
 
-    // Handle all other routes for SPA
-    app.get(['/', '/dashboard', '/machines', '/bookings', '/profile'], (req, res) => {
-      res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+        console.log('Validating required fields...');
+        if (!name || !category || !image || !hourlyRate || !dailyRate || !location || !description) {
+          console.log('Missing fields:', { name: !!name, category: !!category, image: !!image, hourlyRate: !!hourlyRate, dailyRate: !!dailyRate, location: !!location, description: !!description });
+          return res.status(400).json({ message: 'Missing required fields' });
+        }
+
+        // Validate image data (should be base64 string)
+        if (!image.startsWith('data:image/')) {
+          return res.status(400).json({ message: 'Invalid image format. Must be a valid image file.' });
+        }
+
+        // Validate image size (base64 strings are about 33% larger than original file)
+        if (image.length > 10000000) { // ~10MB limit
+          return res.status(400).json({ message: 'Image too large. Please use an image smaller than 7MB.' });
+        }
+
+        // Validate pricing
+        if (hourlyRate < 0 || dailyRate < 0) {
+          return res.status(400).json({ message: 'Pricing must be positive numbers' });
+        }
+
+        const newMachine = new Machine({
+          name: name.trim(),
+          category: category.trim(),
+          image,
+          hourlyRate,
+          dailyRate,
+          available: available !== undefined ? available : true,
+          rating: rating || 4.0,
+          location: location.trim(),
+          description: description.trim(),
+          features: features || [],
+          stock: stock || 1
+        });
+
+        const savedMachine = await newMachine.save();
+        res.status(201).json(savedMachine);
+      } catch (error) {
+        console.error('Error creating machine:', error);
+        res.status(500).json({ message: 'Failed to create machine' });
+      }
     });
+
+    app.get('/api/machines', async (req, res) => {
+      try {
+        const machines = await Machine.find().sort({ createdAt: -1 });
+        res.json(machines);
+      } catch (error) {
+        console.error('Error fetching machines:', error);
+        res.status(500).json({ message: 'Failed to fetch machines' });
+      }
+    });
+
+    app.get('/api/machines/:id', async (req, res) => {
+      try {
+        const { id } = req.params;
+        const machine = await Machine.findById(id);
+        
+        if (!machine) {
+          return res.status(404).json({ message: 'Machine not found' });
+        }
+        
+        res.json(machine);
+      } catch (error) {
+        console.error('Error fetching machine:', error);
+        res.status(500).json({ message: 'Failed to fetch machine' });
+      }
+    });
+
+    app.put('/api/machines/:id', async (req, res) => {
+      try {
+        const { id } = req.params;
+        const updates = req.body;
+        
+        const updatedMachine = await Machine.findByIdAndUpdate(
+          id,
+          updates,
+          { new: true, runValidators: true }
+        );
+        
+        if (!updatedMachine) {
+          return res.status(404).json({ message: 'Machine not found' });
+        }
+        
+        res.json(updatedMachine);
+      } catch (error) {
+        console.error('Error updating machine:', error);
+        res.status(500).json({ message: 'Failed to update machine' });
+      }
+    });
+
+    app.delete('/api/machines/:id', async (req, res) => {
+      try {
+        const { id } = req.params;
+        const deletedMachine = await Machine.findByIdAndDelete(id);
+        
+        if (!deletedMachine) {
+          return res.status(404).json({ message: 'Machine not found' });
+        }
+        
+        res.json({ message: 'Machine deleted successfully' });
+      } catch (error) {
+        console.error('Error deleting machine:', error);
+        res.status(500).json({ message: 'Failed to delete machine' });
+      }
+    });
+
+    // Serve static files from the frontend build (uncomment for production)
+    // app.use(express.static(path.join(__dirname, 'dist')));
+
+    // Handle all other routes for SPA (uncomment for production)
+    // app.get(['/', '/dashboard', '/machines', '/bookings', '/profile'], (req, res) => {
+    //   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+    // });
     
-    // Final catch-all for any other routes
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-    });
+    // Final catch-all for any other routes (uncomment for production)
+    // app.get('*', (req, res) => {
+    //   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+    // });
 
     app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);

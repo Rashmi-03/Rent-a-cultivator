@@ -30,7 +30,12 @@ export const useMachines = () => {
       setLoading(true);
       setError(null);
       const data = await machinesAPI.getAll();
-      setMachines(data);
+      // Transform MongoDB _id to id for frontend compatibility
+      const transformedMachines = data.map((machine: any) => ({
+        ...machine,
+        id: machine._id || machine.id
+      }));
+      setMachines(transformedMachines);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch machines');
       console.error('Error fetching machines:', err);
@@ -42,11 +47,20 @@ export const useMachines = () => {
   const addMachine = async (machine: Omit<Machine, 'id'>) => {
     try {
       setError(null);
+      console.log('Attempting to add machine:', machine);
       const newMachine = await machinesAPI.create(machine);
-      setMachines(prev => [...prev, newMachine]);
-      return newMachine;
+      console.log('Machine added successfully:', newMachine);
+      // Transform MongoDB _id to id for frontend compatibility
+      const transformedMachine = {
+        ...newMachine,
+        id: newMachine._id || newMachine.id
+      };
+      setMachines(prev => [...prev, transformedMachine]);
+      return transformedMachine;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add machine');
+      console.error('Error adding machine:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to add machine';
+      setError(errorMessage);
       throw err;
     }
   };
@@ -55,12 +69,17 @@ export const useMachines = () => {
     try {
       setError(null);
       const updatedMachine = await machinesAPI.update(id, updates);
+      // Transform MongoDB _id to id for frontend compatibility
+      const transformedMachine = {
+        ...updatedMachine,
+        id: updatedMachine._id || updatedMachine.id
+      };
       setMachines(prev => 
         prev.map(machine => 
-          machine.id === id ? updatedMachine : machine
+          machine.id === id ? transformedMachine : machine
         )
       );
-      return updatedMachine;
+      return transformedMachine;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update machine');
       throw err;
@@ -76,6 +95,11 @@ export const useMachines = () => {
       setError(err instanceof Error ? err.message : 'Failed to delete machine');
       throw err;
     }
+  };
+
+  // Refresh machines from database
+  const refreshMachines = async () => {
+    await fetchMachines();
   };
 
   const getMachineById = (id: string) => {
@@ -131,6 +155,6 @@ export const useMachines = () => {
     getMachinesByLocation,
     getAverageRating,
     getTotalRevenue,
-    refreshMachines: fetchMachines,
+    refreshMachines: refreshMachines,
   };
 };
