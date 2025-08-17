@@ -162,7 +162,17 @@ router.post('/bookings', async (req, res) => {
 router.get('/bookings/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    const bookings = await Booking.find({ user: userId }).sort({ createdAt: -1 });
+    let query = {};
+    
+    // Check if userId is a valid ObjectId
+    if (mongoose.Types.ObjectId.isValid(userId)) {
+      query.user = userId;
+    } else {
+      // For demo purposes, return all bookings if using a demo ID
+      console.log('Using demo user ID, returning all bookings');
+    }
+    
+    const bookings = await Booking.find(query).sort({ createdAt: -1 });
     res.json(bookings);
   } catch (error) {
     console.error('Error fetching bookings:', error);

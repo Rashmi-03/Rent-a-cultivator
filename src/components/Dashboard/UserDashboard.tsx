@@ -339,9 +339,10 @@ export const UserDashboard = () => {
       setIsBookingModalOpen(false);
       setSelectedMachine(null);
     } catch (error) {
+      console.error('Booking error:', error);
       toast({
         title: "Booking Failed",
-        description: "There was an error creating your booking. Please try again.",
+        description: error.message || "There was an error creating your booking. Please try again.",
         variant: "destructive",
       });
     }

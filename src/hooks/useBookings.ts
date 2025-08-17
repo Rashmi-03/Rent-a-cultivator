@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 
 export interface BookingData {
   id: string;
+  userId: string;
+  machineId: string;
   equipmentId: string;
   equipmentName: string;
   startDate: Date;
@@ -15,13 +17,14 @@ export interface BookingData {
   deliveryAddress: string;
   contactNumber: string;
   specialRequirements: string;
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  status: 'pending' | 'accepted' | 'rejected' | 'confirmed' | 'completed' | 'cancelled';
+  quantity: number;
   createdAt: Date;
 }
 
 // For demo purposes, we'll use a simple user ID
 // In production, this would come from authentication context
-const DEMO_USER_ID = 'demo-user-123';
+const DEMO_USER_ID = '64d0b6a4c0f1564d5ecbf91e'; // Replace with a valid MongoDB ObjectId from your users collection
 
 export const useBookings = () => {
   const [bookings, setBookings] = useState<BookingData[]>([]);
@@ -35,11 +38,13 @@ export const useBookings = () => {
   const fetchBookings = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/auth/bookings/${DEMO_USER_ID}`);
+      const response = await fetch(`/api/bookings?userId=${DEMO_USER_ID}`);
       if (response.ok) {
         const data = await response.json();
         const formattedBookings = data.map((booking: any) => ({
           id: booking._id,
+          userId: booking.user?._id || booking.user,
+          machineId: booking.machine?._id || booking.machine,
           equipmentId: booking.equipmentId,
           equipmentName: booking.equipmentName,
           startDate: new Date(booking.startDate),
@@ -54,6 +59,7 @@ export const useBookings = () => {
           contactNumber: booking.contactNumber,
           specialRequirements: booking.specialRequirements,
           status: booking.status,
+          quantity: booking.quantity || 1,
           createdAt: new Date(booking.createdAt)
         }));
         setBookings(formattedBookings);
@@ -90,21 +96,29 @@ export const useBookings = () => {
 
   const addBooking = async (bookingData: Omit<BookingData, 'id' | 'status' | 'createdAt'>) => {
     try {
-      const response = await fetch('/api/auth/bookings', {
+      console.log('Attempting to save booking to database:', bookingData);
+      
+      const response = await fetch('/api/bookings', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           ...bookingData,
-          userId: DEMO_USER_ID
+          userId: DEMO_USER_ID,
+          machineId: bookingData.equipmentId,
+          quantity: bookingData.quantity || 1
         }),
       });
 
       if (response.ok) {
         const savedBooking = await response.json();
+        console.log('Booking saved successfully to database:', savedBooking);
+        
         const newBooking: BookingData = {
           id: savedBooking._id,
+          userId: savedBooking.user?._id || savedBooking.user,
+          machineId: savedBooking.machine?._id || savedBooking.machine,
           equipmentId: savedBooking.equipmentId,
           equipmentName: savedBooking.equipmentName,
           startDate: new Date(savedBooking.startDate),
@@ -119,31 +133,50 @@ export const useBookings = () => {
           contactNumber: savedBooking.contactNumber,
           specialRequirements: savedBooking.specialRequirements,
           status: savedBooking.status,
+          quantity: savedBooking.quantity || 1,
           createdAt: new Date(savedBooking.createdAt)
         };
 
         setBookings(prev => [newBooking, ...prev]);
+        
+        // Also save to localStorage as backup
+        const existingBookings = JSON.parse(localStorage.getItem('agrifleet-bookings') || '[]');
+        existingBookings.unshift(newBooking);
+        localStorage.setItem('agrifleet-bookings', JSON.stringify(existingBookings));
+        
         return newBooking;
       } else {
-        throw new Error('Failed to save booking to database');
+        const errorText = await response.text();
+        console.error('Failed to save booking to database. Status:', response.status, 'Error:', errorText);
+        throw new Error(`Failed to save booking: ${response.status} - ${errorText}`);
       }
     } catch (error) {
       console.error('Error saving booking to database:', error);
-      // Fallback to localStorage if database save fails
-      const newBooking: BookingData = {
+      
+      // Create a temporary booking for immediate UI feedback
+      const tempBooking: BookingData = {
         ...bookingData,
-        id: `booking-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         status: 'pending',
         createdAt: new Date()
       };
-      setBookings(prev => [newBooking, ...prev]);
-      return newBooking;
+      
+      // Add to local state for immediate UI update
+      setBookings(prev => [tempBooking, ...prev]);
+      
+      // Save to localStorage as fallback
+      const existingBookings = JSON.parse(localStorage.getItem('agrifleet-bookings') || '[]');
+      existingBookings.unshift(tempBooking);
+      localStorage.setItem('agrifleet-bookings', JSON.stringify(existingBookings));
+      
+      // Show error toast to user
+      throw new Error('Failed to save booking to database. Please check your connection and try again.');
     }
   };
 
   const updateBookingStatus = async (bookingId: string, status: BookingData['status']) => {
     try {
-      const response = await fetch(`/api/auth/bookings/${bookingId}/status`, {
+      const response = await fetch(`/api/bookings/${bookingId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -175,16 +208,21 @@ export const useBookings = () => {
     }
   };
 
-  const cancelBooking = (bookingId: string) => {
-    updateBookingStatus(bookingId, 'cancelled');
+  const cancelBooking = async (bookingId: string) => {
+    return updateBookingStatus(bookingId, 'cancelled');
   };
 
-  const completeBooking = (bookingId: string) => {
-    updateBookingStatus(bookingId, 'completed');
+  const completeBooking = async (bookingId: string) => {
+    return updateBookingStatus(bookingId, 'completed');
   };
 
-  const confirmBooking = (bookingId: string) => {
-    updateBookingStatus(bookingId, 'confirmed');
+  const confirmBooking = async (bookingId: string) => {
+    return updateBookingStatus(bookingId, 'confirmed');
+  };
+  
+  // Refresh bookings from database
+  const refreshBookings = () => {
+    return fetchBookings();
   };
 
   const getBookingsByStatus = (status: BookingData['status']) => {
@@ -230,4 +268,4 @@ export const useBookings = () => {
     getUpcomingBookings,
     refreshBookings: fetchBookings
   };
-}; 
+};

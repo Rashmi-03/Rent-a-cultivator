@@ -96,6 +96,12 @@ export const bookingsAPI = {
       body: JSON.stringify(bookingData),
     }),
   
+  updateStatus: (id: string, status: string) =>
+    apiRequest(`/bookings/${id}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    }),
+  
   delete: (id: string) =>
     apiRequest(`/bookings/${id}`, {
       method: 'DELETE',

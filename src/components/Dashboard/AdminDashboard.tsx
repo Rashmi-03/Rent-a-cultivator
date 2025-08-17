@@ -2,16 +2,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Users, Calendar, TrendingUp, Plus, Settings, MessageSquare, Star } from "lucide-react";
+import { Users, Calendar, TrendingUp, Plus, Settings, MessageSquare, Star, Trash2, BookOpen } from "lucide-react";
 import { useState } from "react";
 import { AddMachineModal } from "./AddMachineModal";
 import { SettingsModal } from "./SettingsModal";
 import { UpdateStockModal } from "./UpdateStockModal";
 import { CategoriesModal } from "./CategoriesModal";
 import { FeedbackModal } from "./FeedbackModal";
+import { BookedMachinesModal } from "./BookedMachinesModal";
 import { useMachines } from "@/hooks/useMachines";
 import { useBookings } from "@/hooks/useBookings";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 
 interface RecentOrder {
   id: string;
@@ -35,6 +36,7 @@ interface Machine {
   location: string;
   description: string;
   features: string[];
+  stock: number;
 }
 
 const recentOrders: RecentOrder[] = [
@@ -49,7 +51,8 @@ export const AdminDashboard = () => {
   const [isUpdateStockModalOpen, setIsUpdateStockModalOpen] = useState(false);
   const [isCategoriesModalOpen, setIsCategoriesModalOpen] = useState(false);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
-  const { machines, addMachine, getTotalMachines, getAvailableMachinesCount, getAverageRating, getTotalRevenue, refreshMachines } = useMachines();
+  const [isBookedMachinesModalOpen, setIsBookedMachinesModalOpen] = useState(false);
+  const { machines, addMachine, deleteMachine, getTotalMachines, getAvailableMachinesCount, getAverageRating, getTotalRevenue, refreshMachines } = useMachines();
   const { bookings, getActiveBookings, getTotalSpent } = useBookings();
   const { toast } = useToast();
 
@@ -107,6 +110,10 @@ export const AdminDashboard = () => {
           <Button variant="outline" onClick={() => setIsSettingsModalOpen(true)}>
             <Settings className="h-4 w-4 mr-2" />
             Settings
+          </Button>
+          <Button variant="outline" onClick={() => setIsBookedMachinesModalOpen(true)}>
+            <BookOpen className="h-4 w-4 mr-2" />
+            View Bookings
           </Button>
           <Button variant="agriculture" onClick={() => setIsAddMachineModalOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
@@ -242,9 +249,24 @@ export const AdminDashboard = () => {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="font-semibold text-sm line-clamp-1">{machine.name}</h3>
-                    <Badge variant={machine.available ? "default" : "secondary"}>
-                      {machine.available ? "Available" : "Rented"}
-                    </Badge>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant={machine.available ? "default" : "secondary"}>
+                        {machine.available ? "Available" : "Rented"}
+                      </Badge>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-6 w-6 text-destructive hover:bg-destructive/10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (window.confirm(`Are you sure you want to delete ${machine.name}?`)) {
+                            deleteMachine(machine.id);
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                   <div className="text-xs text-muted-foreground space-y-1">
                     <p>{machine.category} • {machine.location}</p>
@@ -326,6 +348,11 @@ export const AdminDashboard = () => {
         isOpen={isFeedbackModalOpen}
         onClose={() => setIsFeedbackModalOpen(false)}
       />
+      <BookedMachinesModal
+        isOpen={isBookedMachinesModalOpen}
+        onClose={() => setIsBookedMachinesModalOpen(false)}
+      />
+
     </div>
   );
 };

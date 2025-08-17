@@ -26,6 +26,7 @@ interface MachineData {
   image: string;
   available: boolean;
   rating: number;
+  stock?: number;
 }
 
 const machineCategories = [
@@ -51,7 +52,8 @@ export const AddMachineModal = ({ isOpen, onClose, onAddMachine }: AddMachineMod
     features: [],
     image: '',
     available: true,
-    rating: 4.0
+    rating: 4.0,
+    stock: 1
   });
 
   const [newFeature, setNewFeature] = useState('');
@@ -174,7 +176,8 @@ export const AddMachineModal = ({ isOpen, onClose, onAddMachine }: AddMachineMod
       features: [],
       image: '',
       available: true,
-      rating: 4.0
+      rating: 4.0,
+      stock: 1
     });
     setImagePreview('');
   };
@@ -361,8 +364,8 @@ export const AddMachineModal = ({ isOpen, onClose, onAddMachine }: AddMachineMod
             )}
           </div>
 
-          {/* Rating and Availability */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Rating, Availability, and Stock */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="rating">Rating</Label>
               <Select value={formData.rating.toString()} onValueChange={(value) => handleInputChange('rating', parseFloat(value))}>
@@ -390,6 +393,18 @@ export const AddMachineModal = ({ isOpen, onClose, onAddMachine }: AddMachineMod
                   <SelectItem value="false">Not Available</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="stock">Initial Stock</Label>
+              <Input
+                id="stock"
+                type="number"
+                min="1"
+                value={formData.stock || 1}
+                onChange={(e) => handleInputChange('stock', parseInt(e.target.value) || 1)}
+                placeholder="1"
+              />
             </div>
           </div>
 

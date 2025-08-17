@@ -8,6 +8,8 @@ import authRouter from './backend/routes/auth.js';
 import bcrypt from 'bcryptjs';
 import User from './backend/models/User.js';
 import Machine from './backend/models/machine.js';
+import Booking from './backend/models/Booking.js';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,15 +27,34 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
-app.use(express.json());
+app.use(express.json({ limit: '50mb' })); // Increase limit for base64 images
 
 const PORT = process.env.PORT || 3000;
-const MONGODB_URI = process.env.MONGODB_URI;
+let MONGODB_URI = process.env.MONGODB_URI;
 
+// Load config from config.env if .env is not available
 if (!MONGODB_URI) {
-  console.error('Missing MONGODB_URI in environment. Create a .env file with MONGODB_URI.');
-  process.exit(1);
+  try {
+    const configContent = fs.readFileSync('./config.env', 'utf8');
+    const configLines = configContent.split('\n');
+    for (const line of configLines) {
+      if (line.startsWith('MONGODB_URI=')) {
+        MONGODB_URI = line.split('=')[1].replace(/"/g, '');
+        break;
+      }
+    }
+  } catch (error) {
+    console.log('config.env not found, using default local MongoDB');
+  }
 }
+
+// Use default local MongoDB if no connection string is provided
+if (!MONGODB_URI) {
+  MONGODB_URI = 'mongodb://localhost:27017/rent-a-cultivator';
+  console.log('Using default local MongoDB connection');
+}
+
+console.log('MongoDB URI:', MONGODB_URI);
 
 async function startServer() {
   try {
@@ -115,6 +136,217 @@ async function startServer() {
     });
 
     app.use('/api/auth', authRouter);
+
+    // Booking routes
+    app.post('/api/bookings', async (req, res) => {
+      try {
+        console.log('Received booking creation request:', req.body);
+        
+        const {
+          userId,
+          machineId,
+          quantity,
+          startDate,
+          endDate,
+          duration,
+          durationType,
+          distance,
+          basePrice,
+          distancePrice,
+          totalPrice,
+          deliveryAddress,
+          contactNumber,
+          specialRequirements,
+          equipmentId,
+          equipmentName
+        } = req.body;
+
+        console.log('Validating required fields...');
+        if (!userId || !machineId || !startDate || !endDate || !duration || !basePrice || !totalPrice || !deliveryAddress || !contactNumber) {
+          console.log('Missing fields:', { 
+            userId: !!userId, 
+            machineId: !!machineId, 
+            startDate: !!startDate, 
+            endDate: !!endDate, 
+            duration: !!duration, 
+            basePrice: !!basePrice, 
+            totalPrice: !!totalPrice, 
+            deliveryAddress: !!deliveryAddress, 
+            contactNumber: !!contactNumber 
+          });
+          return res.status(400).json({ message: 'Missing required fields' });
+        }
+
+        // Validate dates
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        if (start >= end) {
+          return res.status(400).json({ message: 'End date must be after start date' });
+        }
+
+        // Validate duration
+        if (duration <= 0) {
+          return res.status(400).json({ message: 'Duration must be positive' });
+        }
+
+        // Validate pricing
+        if (basePrice < 0 || totalPrice < 0) {
+          return res.status(400).json({ message: 'Pricing must be positive numbers' });
+        }
+
+        // Create new booking
+        const newBooking = new Booking({
+          user: userId,
+          machine: machineId,
+          quantity: quantity || 1,
+          startDate: start,
+          endDate: end,
+          duration,
+          durationType: durationType || 'hours',
+          distance: distance || 0,
+          basePrice,
+          distancePrice: distancePrice || 0,
+          totalPrice,
+          deliveryAddress: deliveryAddress.trim(),
+          contactNumber: contactNumber.trim(),
+          specialRequirements: specialRequirements || '',
+          equipmentId: equipmentId || machineId,
+          equipmentName: equipmentName || 'Unknown Equipment'
+        });
+
+        const savedBooking = await newBooking.save();
+        console.log('Booking created successfully:', savedBooking._id);
+        
+        res.status(201).json(savedBooking);
+      } catch (error) {
+        console.error('Error creating booking:', error);
+        
+        if (error.name === 'ValidationError') {
+          return res.status(400).json({ error: 'Validation error', details: error.message });
+        }
+        
+        res.status(500).json({ message: 'Failed to create booking' });
+      }
+    });
+
+    app.get('/api/bookings', async (req, res) => {
+      try {
+        const { userId, status } = req.query;
+        let query = {};
+        
+        if (userId) {
+          query.user = userId;
+        }
+        
+        if (status) {
+          query.status = status;
+        }
+        
+        const bookings = await Booking.find(query)
+          .populate('user', 'name email phone')
+          .populate('machine', 'name category image hourlyRate dailyRate')
+          .sort({ createdAt: -1 });
+        
+        res.json(bookings);
+      } catch (error) {
+        console.error('Error fetching bookings:', error);
+        res.status(500).json({ message: 'Failed to fetch bookings' });
+      }
+    });
+
+    app.get('/api/bookings/:id', async (req, res) => {
+      try {
+        const { id } = req.params;
+        const booking = await Booking.findById(id)
+          .populate('user', 'name email phone')
+          .populate('machine', 'name category image hourlyRate dailyRate');
+        
+        if (!booking) {
+          return res.status(404).json({ message: 'Booking not found' });
+        }
+        
+        res.json(booking);
+      } catch (error) {
+        console.error('Error fetching booking:', error);
+        res.status(500).json({ message: 'Failed to fetch booking' });
+      }
+    });
+
+    app.put('/api/bookings/:id/status', async (req, res) => {
+      try {
+        const { id } = req.params;
+        const { status } = req.body;
+        
+        if (!status || !['pending', 'accepted', 'rejected', 'confirmed', 'completed', 'cancelled'].includes(status)) {
+          return res.status(400).json({ message: 'Invalid status' });
+        }
+        
+        const updatedBooking = await Booking.findByIdAndUpdate(
+          id,
+          { status },
+          { new: true, runValidators: true }
+        );
+        
+        if (!updatedBooking) {
+          return res.status(404).json({ message: 'Booking not found' });
+        }
+        
+        res.json(updatedBooking);
+      } catch (error) {
+        console.error('Error updating booking status:', error);
+        res.status(500).json({ message: 'Failed to update booking status' });
+      }
+    });
+
+    app.put('/api/bookings/:id', async (req, res) => {
+      try {
+        const { id } = req.params;
+        const updates = req.body;
+        
+        // Remove undefined fields to prevent overwriting with undefined
+        Object.keys(updates).forEach(key => {
+          if (updates[key] === undefined) {
+            delete updates[key];
+          }
+        });
+        
+        const updatedBooking = await Booking.findByIdAndUpdate(
+          id,
+          updates,
+          { new: true, runValidators: true }
+        );
+        
+        if (!updatedBooking) {
+          return res.status(404).json({ message: 'Booking not found' });
+        }
+        
+        res.json(updatedBooking);
+      } catch (error) {
+        console.error('Error updating booking:', error);
+        
+        if (error.name === 'ValidationError') {
+          return res.status(400).json({ error: 'Validation error', details: error.message });
+        }
+        
+        res.status(500).json({ message: 'Failed to update booking' });
+      }
+    });
+
+    app.delete('/api/bookings/:id', async (req, res) => {
+      try {
+        const { id } = req.params;
+        const deletedBooking = await Booking.findByIdAndDelete(id);
+        
+        if (!deletedBooking) {
+          return res.status(404).json({ message: 'Booking not found' });
+        }
+        
+        res.json({ message: 'Booking deleted successfully' });
+      } catch (error) {
+        console.error('Error deleting booking:', error);
+        res.status(500).json({ message: 'Failed to delete booking' });
+      }
+    });
 
     // Machine routes
     app.post('/api/machines', async (req, res) => {

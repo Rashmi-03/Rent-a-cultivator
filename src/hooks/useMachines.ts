@@ -13,6 +13,7 @@ interface Machine {
   location: string;
   description: string;
   features: string[];
+  stock: number;
 }
 
 export const useMachines = () => {
@@ -29,7 +30,7 @@ export const useMachines = () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await machinesAPI.getAll();
+      const data = await machinesAPI.getAll() as any[];
       // Transform MongoDB _id to id for frontend compatibility
       const transformedMachines = data.map((machine: any) => ({
         ...machine,
@@ -48,13 +49,21 @@ export const useMachines = () => {
     try {
       setError(null);
       console.log('Attempting to add machine:', machine);
-      const newMachine = await machinesAPI.create(machine);
+      
+      // Ensure all required fields are present
+      if (!machine.name || !machine.category || !machine.hourlyRate || !machine.dailyRate || !machine.location || !machine.description || !machine.image) {
+        throw new Error('Missing required fields');
+      }
+      
+      const newMachine = await machinesAPI.create(machine) as any;
       console.log('Machine added successfully:', newMachine);
+      
       // Transform MongoDB _id to id for frontend compatibility
       const transformedMachine = {
         ...newMachine,
         id: newMachine._id || newMachine.id
       };
+      
       setMachines(prev => [...prev, transformedMachine]);
       return transformedMachine;
     } catch (err) {
@@ -68,7 +77,7 @@ export const useMachines = () => {
   const updateMachine = async (id: string, updates: Partial<Machine>) => {
     try {
       setError(null);
-      const updatedMachine = await machinesAPI.update(id, updates);
+      const updatedMachine = await machinesAPI.update(id, updates) as any;
       // Transform MongoDB _id to id for frontend compatibility
       const transformedMachine = {
         ...updatedMachine,

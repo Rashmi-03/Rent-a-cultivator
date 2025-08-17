@@ -296,9 +296,9 @@ export const EquipmentShowcase = ({ onBookEquipment }: EquipmentShowcaseProps) =
     setIsBookingModalOpen(true);
   };
 
-  const handleConfirmBooking = (bookingData: any) => {
+  const handleConfirmBooking = async (bookingData: any) => {
     try {
-      const newBooking = addBooking({
+      const newBooking = await addBooking({
         equipmentId: bookingData.equipmentId,
         equipmentName: bookingData.equipmentName,
         startDate: bookingData.startDate,
@@ -322,9 +322,10 @@ export const EquipmentShowcase = ({ onBookEquipment }: EquipmentShowcaseProps) =
       // Call the original onBookEquipment callback if provided
       onBookEquipment?.(selectedEquipment!);
     } catch (error) {
+      console.error('Booking error:', error);
       toast({
         title: "Booking Failed",
-        description: "There was an error creating your booking. Please try again.",
+        description: error.message || "There was an error creating your booking. Please try again.",
         variant: "destructive",
       });
     }

@@ -39,6 +39,7 @@ interface BookingData {
   startDate: Date;
   endDate: Date;
   duration: number;
+  durationType: 'hours' | 'days';
   distance: number;
   basePrice: number;
   distancePrice: number;
@@ -46,6 +47,7 @@ interface BookingData {
   deliveryAddress: string;
   contactNumber: string;
   specialRequirements: string;
+  quantity: number;
 }
 
 // Fixed delivery amounts for specific locations
@@ -68,6 +70,7 @@ export const BookingModal = ({ equipment, isOpen, onClose, onConfirm }: BookingM
   const [specialRequirements, setSpecialRequirements] = useState('');
   const [distance, setDistance] = useState<number>(0);
   const [isCalculating, setIsCalculating] = useState(false);
+  const [quantity, setQuantity] = useState<number>(1);
 
   // Calculate delivery amount based on address
   const calculateDeliveryAmount = async (address: string) => {
@@ -123,13 +126,15 @@ export const BookingModal = ({ equipment, isOpen, onClose, onConfirm }: BookingM
       startDate,
       endDate,
       duration,
+      durationType,
       distance,
       basePrice: pricing.basePrice,
       distancePrice: pricing.distancePrice,
       totalPrice: pricing.totalPrice,
       deliveryAddress,
       contactNumber,
-      specialRequirements
+      specialRequirements,
+      quantity
     };
 
     onConfirm(bookingData);
@@ -199,6 +204,18 @@ export const BookingModal = ({ equipment, isOpen, onClose, onConfirm }: BookingM
                       />
                     </PopoverContent>
                   </Popover>
+                </div>
+
+                <div>
+                  <Label htmlFor="quantity">Quantity</Label>
+                  <Input
+                    id="quantity"
+                    type="number"
+                    min="1"
+                    value={quantity}
+                    onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                    placeholder="1"
+                  />
                 </div>
 
                 <div>
