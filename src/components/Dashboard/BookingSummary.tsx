@@ -3,14 +3,18 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, MapPin, Truck, TrendingUp } from "lucide-react";
 import { useBookings } from "@/hooks/useBookings";
 import { format } from "date-fns";
+import { useState, useEffect } from "react";
 
 export const BookingSummary = () => {
   const { 
     bookings, 
     getBookingsByStatus, 
     getTotalSpent, 
-    getUpcomingBookings 
+    getUpcomingBookings,
+    refreshBookings 
   } = useBookings();
+  
+  const [showConnectionError, setShowConnectionError] = useState(false);
 
   const pendingBookings = getBookingsByStatus('pending');
   const confirmedBookings = getBookingsByStatus('confirmed');
@@ -25,8 +29,21 @@ export const BookingSummary = () => {
   const totalDeliveryCost = bookings.reduce((sum, booking) => sum + booking.distancePrice, 0);
   const averageDeliveryCost = bookings.length > 0 ? Math.round(totalDeliveryCost / bookings.length) : 0;
 
+  // Check if any booking has a temporary ID (indicating it was saved locally due to connection error)
+  const hasLocalBookings = bookings.some(booking => booking.id.startsWith('temp-') || booking.id.startsWith('local-'));
+
+  // Show connection error if there are local bookings
+  useEffect(() => {
+    setShowConnectionError(hasLocalBookings);
+  }, [hasLocalBookings]);
+
+  const handleRetryConnection = () => {
+    refreshBookings();
+  };
+
   return (
     <div className="space-y-6">
+      {/* Connection error banner removed */}
       <h2 className="text-2xl font-semibold">Booking Summary</h2>
       
       {/* Key Metrics */}
@@ -190,4 +207,4 @@ export const BookingSummary = () => {
       </Card>
     </div>
   );
-}; 
+};

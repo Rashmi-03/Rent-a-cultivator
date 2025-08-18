@@ -16,7 +16,7 @@ interface BookedMachinesModalProps {
 }
 
 export const BookedMachinesModal = ({ isOpen, onClose }: BookedMachinesModalProps) => {
-  const { bookings, updateBookingStatus } = useBookings();
+  const { bookings, updateBookingStatus } = useBookings('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
@@ -180,7 +180,7 @@ export const BookedMachinesModal = ({ isOpen, onClose }: BookedMachinesModalProp
                           <>
                             <Button 
                               size="sm" 
-                              onClick={() => handleStatusChange(booking.id, 'confirm')}
+                              onClick={() => handleStatusChange(booking.id, 'confirmed')}
                               className="bg-green-600 hover:bg-green-700"
                             >
                               Accept

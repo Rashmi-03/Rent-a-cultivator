@@ -6,8 +6,9 @@ import { useBookings } from "@/hooks/useBookings";
 import { format } from "date-fns";
 import { BookingSummary } from "./BookingSummary";
 import { BookingModal } from "@/components/Booking/BookingModal";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { BookingFailedPopup } from "./BookingFailedPopup";
 
 // Import all machinery images
 import tractorStock from "@/assets/tractor-stock.jpg";
@@ -297,11 +298,13 @@ export const UserDashboard = () => {
     getUpcomingBookings,
     cancelBooking,
     completeBooking,
-    addBooking 
+    addBooking,
+    refreshBookings 
   } = useBookings();
 
   const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [showBookingError, setShowBookingError] = useState(false);
   const { toast } = useToast();
 
   const activeBookings = getActiveBookings();
@@ -331,15 +334,25 @@ export const UserDashboard = () => {
         specialRequirements: bookingData.specialRequirements
       });
 
-      toast({
-        title: "Booking Confirmed!",
-        description: `Your booking for ${bookingData.equipmentName} has been successfully created. Booking ID: ${newBooking.id}`,
-      });
+      // Check if the booking was saved locally (has a temporary ID)
+      if (newBooking.id.startsWith('temp-') || newBooking.id.startsWith('local-')) {
+        // Show the error popup
+        setShowBookingError(true);
+      } else {
+        // Show success toast for server-saved bookings
+        toast({
+          title: "Booking Confirmed!",
+          description: `Your booking for ${bookingData.equipmentName} has been successfully created. Booking ID: ${newBooking.id}`,
+        });
+      }
 
       setIsBookingModalOpen(false);
       setSelectedMachine(null);
     } catch (error) {
       console.error('Booking error:', error);
+      // Show the error popup
+      setShowBookingError(true);
+      
       toast({
         title: "Booking Failed",
         description: error.message || "There was an error creating your booking. Please try again.",
@@ -540,6 +553,8 @@ export const UserDashboard = () => {
 
       {/* Booking Summary */}
       <BookingSummary />
+
+      {/* Removed BookingFailedPopup component */}
 
       {/* Booking Modal */}
       <BookingModal

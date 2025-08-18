@@ -26,7 +26,7 @@ export interface BookingData {
 // In production, this would come from authentication context
 const DEMO_USER_ID = '64d0b6a4c0f1564d5ecbf91e'; // Replace with a valid MongoDB ObjectId from your users collection
 
-export const useBookings = () => {
+export const useBookings = (scope: 'user' | 'all' = 'user', userId?: string) => {
   const [bookings, setBookings] = useState<BookingData[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -38,7 +38,10 @@ export const useBookings = () => {
   const fetchBookings = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/bookings?userId=${DEMO_USER_ID}`);
+      const endpoint = scope === 'all'
+        ? '/api/bookings'
+        : `/api/bookings?userId=${userId || DEMO_USER_ID}`;
+      const response = await fetch(endpoint);
       if (response.ok) {
         const data = await response.json();
         const formattedBookings = data.map((booking: any) => ({
@@ -98,6 +101,10 @@ export const useBookings = () => {
     try {
       console.log('Attempting to save booking to database:', bookingData);
       
+      // Add a timeout to the fetch request to prevent hanging indefinitely
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
       const response = await fetch('/api/bookings', {
         method: 'POST',
         headers: {
@@ -105,11 +112,14 @@ export const useBookings = () => {
         },
         body: JSON.stringify({
           ...bookingData,
-          userId: DEMO_USER_ID,
+          userId: userId || DEMO_USER_ID,
           machineId: bookingData.equipmentId,
           quantity: bookingData.quantity || 1
         }),
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         const savedBooking = await response.json();
@@ -146,9 +156,26 @@ export const useBookings = () => {
         
         return newBooking;
       } else {
-        const errorText = await response.text();
+        const errorText = await response.text().catch(() => 'Could not read error response');
         console.error('Failed to save booking to database. Status:', response.status, 'Error:', errorText);
-        throw new Error(`Failed to save booking: ${response.status} - ${errorText}`);
+        
+        // Create a temporary booking for immediate UI feedback
+        const tempBooking: BookingData = {
+          ...bookingData,
+          id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          status: 'pending',
+          createdAt: new Date()
+        };
+        
+        // Add to local state for immediate UI update
+        setBookings(prev => [tempBooking, ...prev]);
+        
+        // Save to localStorage as fallback
+        const existingBookings = JSON.parse(localStorage.getItem('agrifleet-bookings') || '[]');
+        existingBookings.unshift(tempBooking);
+        localStorage.setItem('agrifleet-bookings', JSON.stringify(existingBookings));
+        
+        throw new Error(`Failed to save booking: ${response.status} - ${errorText}. Booking saved locally.`);
       }
     } catch (error) {
       console.error('Error saving booking to database:', error);
@@ -169,8 +196,13 @@ export const useBookings = () => {
       existingBookings.unshift(tempBooking);
       localStorage.setItem('agrifleet-bookings', JSON.stringify(existingBookings));
       
+      // Return the temporary booking with a flag indicating it was saved locally
+      tempBooking.id = `local-${tempBooking.id}`;
+      
       // Show error toast to user
-      throw new Error('Failed to save booking to database. Please check your connection and try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.log('Booking saved locally due to connection issue:', errorMessage);
+      return tempBooking;
     }
   };
 

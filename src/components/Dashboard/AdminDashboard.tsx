@@ -53,7 +53,7 @@ export const AdminDashboard = () => {
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
   const [isBookedMachinesModalOpen, setIsBookedMachinesModalOpen] = useState(false);
   const { machines, addMachine, deleteMachine, getTotalMachines, getAvailableMachinesCount, getAverageRating, getTotalRevenue, refreshMachines } = useMachines();
-  const { bookings, getActiveBookings, getTotalSpent } = useBookings();
+  const { bookings, getActiveBookings, getTotalSpent } = useBookings('all');
   const { toast } = useToast();
 
   // Calculate real stats from actual data
