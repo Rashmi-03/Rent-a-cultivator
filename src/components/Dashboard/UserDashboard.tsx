@@ -6,9 +6,10 @@ import { useBookings } from "@/hooks/useBookings";
 import { format } from "date-fns";
 import { BookingSummary } from "./BookingSummary";
 import { BookingModal } from "@/components/Booking/BookingModal";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { BookingFailedPopup } from "./BookingFailedPopup";
+import { useMachines } from "@/hooks/useMachines";
 
 // Import all machinery images
 import tractorStock from "@/assets/tractor-stock.jpg";
@@ -53,7 +54,7 @@ interface Booking {
   cost: number;
 }
 
-const machines: Machine[] = [
+const defaultMachines: Machine[] = [
   {
     id: '1',
     name: 'John Deere 6120M',
@@ -301,6 +302,7 @@ export const UserDashboard = () => {
     addBooking,
     refreshBookings 
   } = useBookings();
+  const { machines: dbMachines, loading: machinesLoading } = useMachines();
 
   const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
@@ -361,6 +363,20 @@ export const UserDashboard = () => {
     }
   };
 
+  const displayMachines = useMemo(() => {
+    if (!dbMachines || dbMachines.length === 0) return defaultMachines;
+    const existingByName = new Set(dbMachines.map((m) => (m.name || '').toLowerCase()));
+    const merged = [...dbMachines];
+    for (const machine of defaultMachines) {
+      const nameKey = (machine.name || '').toLowerCase();
+      if (!existingByName.has(nameKey)) {
+        merged.push(machine);
+      }
+    }
+    return merged;
+  }, [dbMachines]);
+  const availableMachinesCount = displayMachines.filter((m) => m.available).length;
+
   return (
     <div className="container mx-auto px-4 py-8 space-y-8">
       {/* Welcome Section */}
@@ -377,7 +393,7 @@ export const UserDashboard = () => {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-agriculture-crop">24</div>
+            <div className="text-2xl font-bold text-agriculture-crop">{availableMachinesCount}</div>
             <p className="text-xs text-muted-foreground">Ready to rent</p>
           </CardContent>
         </Card>
@@ -409,7 +425,7 @@ export const UserDashboard = () => {
       <section>
         <h2 className="text-2xl font-semibold mb-6">Available Equipment</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {machines.map((machine) => (
+          {displayMachines.map((machine) => (
             <Card key={machine.id} className="overflow-hidden hover:shadow-strong transition-shadow">
               <div className="relative">
                 <img 
