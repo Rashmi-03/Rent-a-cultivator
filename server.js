@@ -477,6 +477,24 @@ async function startServer() {
       }
     });
 
+    // Bulk delete machines (admin-protected via simple header key)
+    app.delete('/api/machines', async (req, res) => {
+      try {
+        const adminKeyHeader = req.headers['x-admin-key'];
+        const ADMIN_DELETE_KEY = process.env.ADMIN_DELETE_KEY || 'Admin123!';
+
+        if (!adminKeyHeader || adminKeyHeader !== ADMIN_DELETE_KEY) {
+          return res.status(403).json({ message: 'Forbidden: invalid admin key' });
+        }
+
+        const result = await Machine.deleteMany({});
+        res.json({ message: 'All machines deleted successfully', deletedCount: result.deletedCount });
+      } catch (error) {
+        console.error('Error bulk deleting machines:', error);
+        res.status(500).json({ message: 'Failed to bulk delete machines' });
+      }
+    });
+
     // Serve static files from the frontend build (uncomment for production)
     // app.use(express.static(path.join(__dirname, 'dist')));
 

@@ -365,16 +365,60 @@ export const UserDashboard = () => {
 
   const displayMachines = useMemo(() => {
     if (!dbMachines || dbMachines.length === 0) return defaultMachines;
-    const existingByName = new Set(dbMachines.map((m) => (m.name || '').toLowerCase()));
-    const merged = [...dbMachines];
-    for (const machine of defaultMachines) {
-      const nameKey = (machine.name || '').toLowerCase();
-      if (!existingByName.has(nameKey)) {
-        merged.push(machine);
+
+    const defaultByName = new Map<string, Machine>();
+    for (const m of defaultMachines) {
+      defaultByName.set((m.name || '').toLowerCase(), m);
+    }
+
+    const seen = new Set<string>();
+    const merged: Machine[] = [];
+
+    // Start with DB machines; replace tiny/empty images with asset images if available
+    for (const dbm of dbMachines) {
+      const key = (dbm.name || '').toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const fromDefault = defaultByName.get(key);
+      const needsAsset = !dbm.image || (dbm.image.startsWith('data:image/') && dbm.image.length < 1000);
+      const image = needsAsset && fromDefault ? fromDefault.image : dbm.image;
+      merged.push({ ...dbm, image: image || fromDefault?.image || dbm.image });
+    }
+
+    // Append any defaults that are not present in DB
+    for (const def of defaultMachines) {
+      const key = (def.name || '').toLowerCase();
+      if (!seen.has(key)) {
+        merged.push(def);
+        seen.add(key);
       }
     }
+
     return merged;
   }, [dbMachines]);
+
+  const getFallbackImageForCategory = (category?: string) => {
+    const key = (category || '').toLowerCase();
+    if (key.includes('tractor')) return tractorStock;
+    if (key.includes('harvest')) return harvesterStock;
+    if (key.includes('baler')) return mahindraRoundBaler;
+    if (key.includes('loader')) return loadersDesktop;
+    if (key.includes('thresh')) return ag400PaddyThresher;
+    if (key.includes('cultivator')) return rigidCultivator;
+    if (key.includes('reaper')) return mahindraStrawReaper;
+    if (key.includes('rotavator')) return tractorRotavator;
+    return tractorStock;
+  };
+
+  const resolveMachineImage = (machine: Machine) => {
+    const img = machine.image;
+    if (!img) return getFallbackImageForCategory(machine.category);
+    // If image is a tiny base64 placeholder, use a category-based fallback
+    if (img.startsWith('data:image/') && img.length < 1000) {
+      return getFallbackImageForCategory(machine.category);
+    }
+    return img;
+  };
   const availableMachinesCount = displayMachines.filter((m) => m.available).length;
 
   return (
@@ -429,7 +473,7 @@ export const UserDashboard = () => {
             <Card key={machine.id} className="overflow-hidden hover:shadow-strong transition-shadow">
               <div className="relative">
                 <img 
-                  src={machine.image} 
+                  src={resolveMachineImage(machine)} 
                   alt={machine.name}
                   className="w-full h-48 object-cover"
                   onError={(e) => {

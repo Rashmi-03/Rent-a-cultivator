@@ -106,6 +106,28 @@ export const useMachines = () => {
     }
   };
 
+  const deleteAllMachines = async (adminKey?: string) => {
+    try {
+      setError(null);
+      // Use fetch directly to pass custom header
+      const response = await fetch('/api/machines', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-key': adminKey || 'Admin123!'
+        }
+      });
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || 'Failed to delete all machines');
+      }
+      setMachines([]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete all machines');
+      throw err;
+    }
+  };
+
   // Refresh machines from database
   const refreshMachines = async () => {
     await fetchMachines();
@@ -156,6 +178,7 @@ export const useMachines = () => {
     addMachine,
     updateMachine,
     deleteMachine,
+    deleteAllMachines,
     getMachineById,
     getMachinesByCategory,
     getAvailableMachines,
