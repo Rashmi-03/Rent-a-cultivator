@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Tractor, Users, Shield } from "lucide-react";
-import heroImage from "@/assets/hero-agriculture.jpg";
-import machinesImage from "@/assets/machines-collection.jpg";
+import heroImage from "@/assets/tractor-stock.jpg";
+import machinesImage from "@/assets/harvester-stock.jpg";
 
 interface HeroSectionProps {
   onGetStarted: () => void;
