@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useUser } from '@/contexts/UserContext';
 
 export interface BookingData {
   id: string;
@@ -22,25 +23,24 @@ export interface BookingData {
   createdAt: Date;
 }
 
-// For demo purposes, we'll use a simple user ID
-// In production, this would come from authentication context
-const DEMO_USER_ID = '64d0b6a4c0f1564d5ecbf91e'; // Replace with a valid MongoDB ObjectId from your users collection
-
 export const useBookings = (scope: 'user' | 'all' = 'user', userId?: string) => {
+  const { user } = useUser();
   const [bookings, setBookings] = useState<BookingData[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Load bookings from database on mount
   useEffect(() => {
-    fetchBookings();
-  }, []);
+    if (user) {
+      fetchBookings();
+    }
+  }, [user]);
 
   const fetchBookings = async () => {
     setLoading(true);
     try {
-      const endpoint = scope === 'all'
-        ? '/api/bookings'
-        : `/api/bookings?userId=${userId || DEMO_USER_ID}`;
+              const endpoint = scope === 'all'
+          ? '/api/bookings'
+          : `/api/bookings?userId=${userId || user?.id}`;
       const response = await fetch(endpoint);
       if (response.ok) {
         const data = await response.json();
@@ -112,7 +112,7 @@ export const useBookings = (scope: 'user' | 'all' = 'user', userId?: string) => 
         },
         body: JSON.stringify({
           ...bookingData,
-          userId: userId || DEMO_USER_ID,
+          userId: userId || user?.id,
           machineId: bookingData.equipmentId,
           quantity: bookingData.quantity || 1
         }),

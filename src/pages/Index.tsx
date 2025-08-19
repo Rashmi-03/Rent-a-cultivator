@@ -6,20 +6,18 @@ import { EquipmentShowcase } from "@/components/Landing/EquipmentShowcase";
 import { ImageGallery } from "@/components/Landing/ImageGallery";
 import { UserDashboard } from "@/components/Dashboard/UserDashboard";
 import { AdminDashboard } from "@/components/Dashboard/AdminDashboard";
-
-type UserType = 'admin' | 'user' | null;
+import { useUser } from "@/contexts/UserContext";
 
 const Index = () => {
-  const [currentUser, setCurrentUser] = useState<UserType>(null);
+  const { user, logout } = useUser();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  const handleAuth = (userType: UserType) => {
-    setCurrentUser(userType);
+  const handleAuth = () => {
     setIsAuthModalOpen(false);
   };
 
   const handleLogout = () => {
-    setCurrentUser(null);
+    logout();
   };
 
   const handleGetStarted = () => {
@@ -29,13 +27,13 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header 
-        userType={currentUser}
+        userType={user?.role || null}
         onAuthClick={() => setIsAuthModalOpen(true)}
         onLogout={handleLogout}
       />
       
       <main>
-        {!currentUser && (
+        {!user && (
           <>
             <HeroSection onGetStarted={handleGetStarted} />
             <EquipmentShowcase onBookEquipment={(equipment) => {
@@ -47,8 +45,8 @@ const Index = () => {
           </>
         )}
         
-        {currentUser === 'user' && <UserDashboard />}
-        {currentUser === 'admin' && <AdminDashboard />}
+        {user?.role === 'user' && <UserDashboard />}
+        {user?.role === 'admin' && <AdminDashboard />}
       </main>
 
       <AuthModal

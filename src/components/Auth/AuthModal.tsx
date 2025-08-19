@@ -6,14 +6,16 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Shield, User } from "lucide-react";
+import { useUser } from "@/contexts/UserContext";
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAuth: (userType: 'admin' | 'user') => void;
+  onAuth: () => void;
 }
 
 export const AuthModal = ({ isOpen, onClose, onAuth }: AuthModalProps) => {
+  const { login, register } = useUser();
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [userType, setUserType] = useState<'admin' | 'user'>('user');
   const [formData, setFormData] = useState({
@@ -32,10 +34,7 @@ export const AuthModal = ({ isOpen, onClose, onAuth }: AuthModalProps) => {
     setError('');
 
     try {
-      // For demo purposes, we'll use a simple authentication system
-      // In production, this would connect to your backend API
       if (authMode === 'register') {
-        // Simulate registration
         if (formData.password !== formData.confirmPassword) {
           throw new Error('Passwords do not match');
         }
@@ -43,36 +42,40 @@ export const AuthModal = ({ isOpen, onClose, onAuth }: AuthModalProps) => {
           throw new Error('Password must be at least 6 characters');
         }
         
-        // Simulate successful registration
-        setTimeout(() => {
-          onAuth(userType);
-          onClose();
-          setFormData({
-            email: '',
-            password: '',
-            confirmPassword: '',
-            name: '',
-            phone: ''
-          });
-        }, 1000);
+        // Register with backend API
+        await register({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          password: formData.password
+        });
+        
+        onAuth();
+        onClose();
+        setFormData({
+          email: '',
+          password: '',
+          confirmPassword: '',
+          name: '',
+          phone: ''
+        });
       } else {
-        // Simulate login
         if (!formData.email || !formData.password) {
           throw new Error('Please fill in all fields');
         }
         
-        // Simulate successful login
-        setTimeout(() => {
-          onAuth(userType);
-          onClose();
-          setFormData({
-            email: '',
-            password: '',
-            confirmPassword: '',
-            name: '',
-            phone: ''
-          });
-        }, 1000);
+        // Login with backend API
+        await login(formData.email, formData.password);
+        
+        onAuth();
+        onClose();
+        setFormData({
+          email: '',
+          password: '',
+          confirmPassword: '',
+          name: '',
+          phone: ''
+        });
       }
     } catch (error) {
       setError((error as Error).message);

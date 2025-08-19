@@ -279,6 +279,7 @@ import { useState } from "react";
 import { BookingModal } from "@/components/Booking/BookingModal";
 import { useBookings } from "@/hooks/useBookings";
 import { useToast } from "@/hooks/use-toast";
+import { useUser } from "@/contexts/UserContext";
 
 interface EquipmentShowcaseProps {
   onBookEquipment?: (equipment: Equipment) => void;
@@ -289,9 +290,18 @@ export const EquipmentShowcase = ({ onBookEquipment }: EquipmentShowcaseProps) =
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const { addBooking } = useBookings();
   const { toast } = useToast();
+  const { user } = useUser();
   const categories = [...new Set(equipmentData.map(item => item.category))];
 
   const handleBookEquipment = (equipment: Equipment) => {
+    if (!user) {
+      toast({
+        title: "Please Login First",
+        description: "You need to be logged in to book equipment.",
+        variant: "destructive",
+      });
+      return;
+    }
     setSelectedEquipment(equipment);
     setIsBookingModalOpen(true);
   };
